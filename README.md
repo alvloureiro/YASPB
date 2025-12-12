@@ -31,7 +31,9 @@ StreamingPlayback is a library designed to provide a clean, extensible interface
 - FFmpeg development libraries (if using FFmpeg backend)
 - GStreamer development libraries (if using GStreamer backend)
 
-### Build Instructions
+### Native Build Instructions
+
+#### macOS / Linux
 
 ```bash
 # Create build directory
@@ -47,13 +49,56 @@ cmake --build .
 ctest
 ```
 
+#### Windows
+
+```bash
+# Using Visual Studio
+mkdir build && cd build
+cmake .. -G "Visual Studio 17 2022"
+cmake --build . --config Release
+```
+
+### Cross-Platform Building
+
+The project supports cross-compilation for multiple platforms. See [Cross-Platform Building Guide](docs/CROSS_PLATFORM_BUILDING.md) for detailed instructions.
+
+**Quick Start:**
+
+```bash
+# Build for Raspberry Pi
+./scripts/build-raspberry-pi.sh
+
+# Build for Windows (from Linux/macOS)
+./scripts/build-windows.sh
+```
+
 ### Build Options
+
+#### General Options
 
 - `BUILD_SHARED_LIBS`: Build shared library instead of static (default: ON)
 - `BUILD_TESTS`: Build test executables (default: ON)
 - `BUILD_EXAMPLES`: Build example executables (default: OFF)
 - `ENABLE_FFMPEG_BACKEND`: Enable FFmpeg backend support (default: ON)
 - `ENABLE_GSTREAMER_BACKEND`: Enable GStreamer backend support (default: OFF)
+
+#### Platform-Specific Options
+
+**Linux:**
+- `ENABLE_HARDWARE_ACCELERATION`: Enable hardware acceleration (VAAPI, VDPAU) (default: ON)
+- `USE_SYSTEM_FFMPEG`: Use system-installed FFmpeg (default: ON)
+
+**Windows:**
+- `ENABLE_DXVA2`: Enable DirectX Video Acceleration (default: ON)
+- `STATIC_RUNTIME`: Use static runtime libraries (default: OFF)
+
+**macOS:**
+- `ENABLE_VIDEOTOOLBOX`: Enable VideoToolbox hardware acceleration (default: ON)
+- `ENABLE_METAL`: Enable Metal rendering (default: OFF)
+
+**Raspberry Pi:**
+- `RASPBERRY_PI_VERSION`: Raspberry Pi version (2, 3, 4, or 5) (default: 4)
+- `RPI_64BIT`: Build for 64-bit (default: ON for Pi 4/5)
 
 Example with custom options:
 ```bash
@@ -77,7 +122,12 @@ yaspb/
 ├── .githooks/              # Git hooks (version controlled)
 │   └── pre-commit          # Pre-commit hook for linting
 ├── scripts/                 # Utility scripts
-│   └── install-hooks.sh    # Script to install git hooks
+│   ├── install-hooks.sh    # Script to install git hooks
+│   ├── build-raspberry-pi.sh  # Raspberry Pi cross-compilation script
+│   └── build-windows.sh    # Windows cross-compilation script
+├── toolchains/              # CMake toolchain files
+│   ├── raspberry-pi.cmake  # Raspberry Pi cross-compilation toolchain
+│   └── windows-cross.cmake # Windows cross-compilation toolchain
 ├── include/                # Public headers
 │   └── playback/
 │       ├── api/            # Public API interfaces
@@ -90,7 +140,8 @@ yaspb/
 ├── examples/               # Example applications
 └── docs/                   # Documentation
     ├── API_ANALYSIS.md     # API architecture analysis
-    └── api-diagram.puml    # PlantUML API diagram
+    ├── api-diagram.puml    # PlantUML API diagram
+    └── CROSS_PLATFORM_BUILDING.md  # Cross-platform build guide
 ```
 
 ## Usage

@@ -3,6 +3,9 @@ build/
 Build/
 BUILD/
 cmake-build-*/
+build-rpi/
+build-windows/
+build-linux/
 
 # CMake generated files
 CMakeCache.txt

@@ -86,6 +86,10 @@ function(add_backend)
         )
     endif()
 
+    # Configure platform-specific flags
+    configure_platform_flags(${BACKEND_NAME}_backend)
+    configure_platform_linker_flags(${BACKEND_NAME}_backend)
+
     # Set backend properties
     set_target_properties(${BACKEND_NAME}_backend PROPERTIES
         VERSION ${PROJECT_VERSION}
