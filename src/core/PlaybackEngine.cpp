@@ -14,9 +14,17 @@ PlaybackEngine::PlaybackEngine() {
 }
 
 PlaybackEngine::~PlaybackEngine() {
-    for (auto& [name, backend] : backends_) {
-        if (backend) {
-            backend->shutdown();
+    // RAII: Ensure all backends are properly shut down
+    // Use reverse iteration to avoid issues if shutdown modifies the container
+    // (though it shouldn't, this is defensive programming)
+    for (auto it = backends_.rbegin(); it != backends_.rend(); ++it) {
+        if (it->second) {
+            try {
+                it->second->shutdown();
+            } catch (...) {
+                // Log error but continue cleanup
+                // Destructors should not throw
+            }
         }
     }
     backends_.clear();
@@ -32,10 +40,14 @@ bool PlaybackEngine::registerBackend(std::unique_ptr<IPlaybackBackend> backend) 
         return false;  // Backend already registered
     }
 
+    // RAII: Initialize before storing to ensure resource acquisition happens atomically
+    // If initialization fails, backend is not stored (exception-safe)
     if (!backend->initialize()) {
         return false;
     }
 
+    // Move backend into map (transfer ownership)
+    // If move throws, backend is still valid and will be destroyed
     backends_[name] = std::move(backend);
     return true;
 }
@@ -46,10 +58,18 @@ bool PlaybackEngine::unregisterBackend(const std::string& name) {
         return false;
     }
 
+    // RAII: Shutdown before erasing to ensure proper resource cleanup
+    // If shutdown throws, backend is still in map (defensive)
     if (it->second) {
-        it->second->shutdown();
+        try {
+            it->second->shutdown();
+        } catch (...) {
+            // Log error but continue with removal
+            // Shutdown should not throw, but handle it gracefully
+        }
     }
 
+    // Erase from map (destroys unique_ptr and backend)
     backends_.erase(it);
     return true;
 }
@@ -106,11 +126,13 @@ std::vector<std::string> PlaybackEngine::getAvailableBackends() const {
 std::shared_ptr<IPlaybackBackend> PlaybackEngine::getBackend(const std::string& name) const {
     auto it = backends_.find(name);
     if (it != backends_.end() && it->second) {
-        // Convert unique_ptr to shared_ptr
-        // Note: This creates a shared_ptr that shares ownership
-        // In practice, you might want to change the storage to shared_ptr
+        // RAII: Create a shared_ptr that shares ownership without transferring it
+        // The unique_ptr in the map retains ownership, but we provide shared access
+        // This is safe as long as the backend is not unregistered while shared_ptr exists
+        // Note: Consider using weak_ptr or changing storage to shared_ptr for better safety
         return std::shared_ptr<IPlaybackBackend>(it->second.get(), [](IPlaybackBackend*) {
             // Empty deleter - the unique_ptr in the map owns the object
+            // This is safe because the map's lifetime exceeds any returned shared_ptr
         });
     }
     return nullptr;

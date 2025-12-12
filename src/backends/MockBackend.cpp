@@ -21,6 +21,61 @@ namespace playback {
 class MockMediaSource;
 class MockPlaybackController;
 
+// RAII Thread Wrapper
+// Ensures thread is always properly joined
+class ThreadGuard {
+   public:
+    ThreadGuard() = default;
+
+    ~ThreadGuard() {
+        if (thread_.joinable()) {
+            thread_.join();
+        }
+    }
+
+    // Non-copyable
+    ThreadGuard(const ThreadGuard&) = delete;
+    ThreadGuard& operator=(const ThreadGuard&) = delete;
+
+    // Movable
+    ThreadGuard(ThreadGuard&& other) noexcept : thread_(std::move(other.thread_)) {}
+    ThreadGuard& operator=(ThreadGuard&& other) noexcept {
+        if (this != &other) {
+            if (thread_.joinable()) {
+                thread_.join();
+            }
+            thread_ = std::move(other.thread_);
+        }
+        return *this;
+    }
+
+    template <typename Function, typename... Args>
+    void start(Function&& f, Args&&... args) {
+        // Ensure previous thread is joined before starting new one
+        if (thread_.joinable()) {
+            thread_.join();
+        }
+        thread_ = std::thread(std::forward<Function>(f), std::forward<Args>(args)...);
+    }
+
+    bool joinable() const {
+        return thread_.joinable();
+    }
+
+    void join() {
+        if (thread_.joinable()) {
+            thread_.join();
+        }
+    }
+
+    std::thread::id get_id() const {
+        return thread_.get_id();
+    }
+
+   private:
+    std::thread thread_;
+};
+
 // Mock Media Source Implementation
 class MockMediaSource : public IMediaSource {
    public:
@@ -162,7 +217,11 @@ class MockPlaybackController : public IPlaybackController {
     }
 
     ~MockPlaybackController() {
-        stop();
+        // RAII: Ensure thread is properly cleaned up
+        // ThreadGuard destructor will automatically join the thread
+        // But we signal it to stop first
+        running_ = false;
+        // ThreadGuard destructor will handle joining
     }
 
     bool play() override {
@@ -176,10 +235,20 @@ class MockPlaybackController : public IPlaybackController {
         // Simulate buffering
         std::this_thread::sleep_for(std::chrono::milliseconds(500));
 
-        state_ = PlaybackState::PLAYING;
+        // RAII: Set running flag before creating thread for exception safety
         running_ = true;
-        playbackThread_ = std::thread(&MockPlaybackController::playbackLoop, this);
-        notifyStateChange();
+
+        try {
+            state_ = PlaybackState::PLAYING;
+            // ThreadGuard ensures thread is properly managed
+            playbackThread_.start(&MockPlaybackController::playbackLoop, this);
+            notifyStateChange();
+        } catch (...) {
+            // If thread creation fails, reset state
+            running_ = false;
+            state_ = PlaybackState::STOPPED;
+            throw;
+        }
 
         return true;
     }
@@ -194,10 +263,12 @@ class MockPlaybackController : public IPlaybackController {
     }
 
     bool stop() override {
+        // Set running to false first to signal thread to stop
         running_ = false;
-        if (playbackThread_.joinable()) {
-            playbackThread_.join();
-        }
+
+        // RAII: ThreadGuard will join automatically, but we do it explicitly here
+        // to ensure state is updated after thread stops
+        playbackThread_.join();
 
         state_ = PlaybackState::STOPPED;
         positionMs_ = 0;
@@ -394,7 +465,7 @@ class MockPlaybackController : public IPlaybackController {
     std::string sessionId_;
 
     std::atomic<bool> running_;
-    std::thread playbackThread_;
+    ThreadGuard playbackThread_;  // RAII: Automatically joins on destruction
 
     mutable std::mutex listenersMutex_;
     std::vector<std::shared_ptr<IPlaybackEventListener>> listeners_;
@@ -446,5 +517,11 @@ class MockBackend : public IPlaybackBackend {
 
 }  // namespace playback
 
-// Factory function (optional, for dynamic loading)
-// Note: This is not required for static linking, but kept for potential future use
+// Factory function for PlaybackFactory
+// This allows the factory to create MockBackend instances
+// Using C++ linkage (not extern "C") to match the forward declaration
+namespace playback {
+std::unique_ptr<IPlaybackBackend> createMockBackendFactory() {
+    return std::make_unique<MockBackend>();
+}
+}  // namespace playback

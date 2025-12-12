@@ -81,6 +81,12 @@ print_platform_info()
 include(cmake/Backends.cmake)
 configure_backends()
 
+# Link mock_backend to playback library if enabled (needed for PlaybackFactory)
+# This is safe because mock_backend doesn't link back to playback
+if(ENABLE_MOCK_BACKEND AND TARGET mock_backend)
+    target_link_libraries(playback PRIVATE mock_backend)
+endif()
+
 if(BUILD_TESTS)
     enable_testing()
     include(cmake/Testing.cmake)

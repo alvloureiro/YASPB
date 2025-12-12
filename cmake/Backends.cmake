@@ -21,7 +21,7 @@ function(configure_backends)
     # FFmpeg Backend
     if(ENABLE_FFMPEG_BACKEND)
         find_package(FFmpeg REQUIRED)
-        
+
         add_backend(
             NAME ffmpeg
             SOURCE src/backends/FFmpegBackend.cpp
@@ -34,7 +34,7 @@ function(configure_backends)
     if(ENABLE_GSTREAMER_BACKEND)
         find_package(PkgConfig REQUIRED)
         pkg_check_modules(GSTREAMER REQUIRED gstreamer-1.0)
-        
+
         add_backend(
             NAME gstreamer
             SOURCE src/backends/GStreamerBackend.cpp
@@ -78,16 +78,25 @@ function(add_backend)
     # Create backend library
     add_library(${BACKEND_NAME}_backend ${BACKEND_SOURCE})
 
-    # Link to core playback library
-    target_link_libraries(${BACKEND_NAME}_backend 
-        PUBLIC 
-            playback
-    )
+    # Link to core playback library (except for mock which doesn't need linking)
+    # Mock backend only needs headers, not the library itself
+    if(NOT BACKEND_NAME STREQUAL "mock")
+        target_link_libraries(${BACKEND_NAME}_backend
+            PUBLIC
+                playback
+        )
+    else()
+        # Mock backend only needs include directories
+        target_include_directories(${BACKEND_NAME}_backend
+            PUBLIC
+                $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>
+        )
+    endif()
 
     # Add external libraries if provided
     if(BACKEND_LINK_LIBRARIES)
-        target_link_libraries(${BACKEND_NAME}_backend 
-            PRIVATE 
+        target_link_libraries(${BACKEND_NAME}_backend
+            PRIVATE
                 ${BACKEND_LINK_LIBRARIES}
         )
     endif()
