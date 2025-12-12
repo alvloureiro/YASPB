@@ -65,11 +65,19 @@ cmake -DBUILD_EXAMPLES=ON -DENABLE_GSTREAMER_BACKEND=ON ..
 ```
 yaspb/
 ├── CMakeLists.txt          # Main build configuration
+├── .clang-format           # Code formatting configuration
+├── .clang-tidy             # Static analysis configuration
+├── .gitattributes          # Git attributes for line endings
+├── .gitignore              # Git ignore patterns
 ├── cmake/                  # Modular CMake configuration files
 │   ├── Backends.cmake      # Backend configuration
 │   ├── Testing.cmake       # Test setup
 │   ├── Examples.cmake      # Example executables
 │   └── Install.cmake       # Installation rules
+├── .githooks/              # Git hooks (version controlled)
+│   └── pre-commit          # Pre-commit hook for linting
+├── scripts/                 # Utility scripts
+│   └── install-hooks.sh    # Script to install git hooks
 ├── include/                # Public headers
 │   └── playback/
 │       ├── api/            # Public API interfaces
@@ -85,6 +93,51 @@ yaspb/
 ## Usage
 
 The library provides a clean API for streaming playback. See the `examples/` directory for usage examples (when built with `BUILD_EXAMPLES=ON`).
+
+## Development
+
+### Code Style
+
+The project uses `clang-format` for code formatting and `clang-tidy` for static analysis. Configuration files are provided:
+
+- `.clang-format`: Code formatting rules (based on Google style)
+- `.clang-tidy`: Static analysis checks
+
+To format code:
+```bash
+clang-format -i path/to/file.cpp
+```
+
+To check code style:
+```bash
+clang-tidy path/to/file.cpp
+```
+
+### Git Hooks
+
+Pre-commit hooks are set up to automatically check code formatting and run static analysis before commits.
+
+**Installation:**
+```bash
+./scripts/install-hooks.sh
+```
+
+The pre-commit hook will:
+- Check code formatting with `clang-format`
+- Run static analysis with `clang-tidy` (requires `compile_commands.json`)
+
+**Generate compile_commands.json:**
+```bash
+cd build
+cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ..
+# compile_commands.json will be created in the build directory
+# Create a symlink in the project root for clang-tidy:
+ln -s build/compile_commands.json ../compile_commands.json
+```
+
+**Prerequisites for hooks:**
+- `clang-format`: Install with `brew install clang-format` (macOS) or `apt-get install clang-format` (Linux)
+- `clang-tidy`: Install with `brew install llvm` (macOS) or `apt-get install clang-tidy` (Linux)
 
 ## Contributing
 
