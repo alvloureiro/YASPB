@@ -9,6 +9,15 @@
 #=============================================================================
 
 function(configure_backends)
+    # Mock Backend (no external dependencies, works on all platforms)
+    if(ENABLE_MOCK_BACKEND)
+        add_backend(
+            NAME mock
+            SOURCE src/backends/MockBackend.cpp
+        )
+        message(STATUS "Mock backend enabled (no external dependencies)")
+    endif()
+
     # FFmpeg Backend
     if(ENABLE_FFMPEG_BACKEND)
         find_package(FFmpeg REQUIRED)
@@ -32,6 +41,11 @@ function(configure_backends)
             LINK_LIBRARIES ${GSTREAMER_LIBRARIES}
             INCLUDE_DIRS ${GSTREAMER_INCLUDE_DIRS}
         )
+    endif()
+
+    # Warn if no backends are enabled
+    if(NOT ENABLE_MOCK_BACKEND AND NOT ENABLE_FFMPEG_BACKEND AND NOT ENABLE_GSTREAMER_BACKEND)
+        message(WARNING "No backends enabled! Enable at least one backend (ENABLE_MOCK_BACKEND is recommended)")
     endif()
 endfunction()
 
@@ -63,7 +77,7 @@ function(add_backend)
 
     # Create backend library
     add_library(${BACKEND_NAME}_backend ${BACKEND_SOURCE})
-    
+
     # Link to core playback library
     target_link_libraries(${BACKEND_NAME}_backend 
         PUBLIC 

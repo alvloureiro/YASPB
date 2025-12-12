@@ -19,8 +19,9 @@ StreamingPlayback is a library designed to provide a clean, extensible interface
 - **Language**: C++17
 - **Build System**: CMake (3.16+)
 - **Backends**: 
-  - FFmpeg (default, enabled)
-  - GStreamer (optional)
+  - **Mock** (default, no dependencies, works on all platforms)
+  - FFmpeg (optional, requires FFmpeg libraries)
+  - GStreamer (optional, requires GStreamer libraries)
 
 ## Building
 
@@ -28,8 +29,9 @@ StreamingPlayback is a library designed to provide a clean, extensible interface
 
 - CMake 3.16 or higher
 - C++17 compatible compiler
-- FFmpeg development libraries (if using FFmpeg backend)
-- GStreamer development libraries (if using GStreamer backend)
+- **No external dependencies required for Mock backend** (default)
+- FFmpeg development libraries (only if using FFmpeg backend)
+- GStreamer development libraries (only if using GStreamer backend)
 
 ### Native Build Instructions
 
@@ -79,7 +81,8 @@ The project supports cross-compilation for multiple platforms. See [Cross-Platfo
 - `BUILD_SHARED_LIBS`: Build shared library instead of static (default: ON)
 - `BUILD_TESTS`: Build test executables (default: ON)
 - `BUILD_EXAMPLES`: Build example executables (default: OFF)
-- `ENABLE_FFMPEG_BACKEND`: Enable FFmpeg backend support (default: ON)
+- `ENABLE_MOCK_BACKEND`: Enable Mock backend (no dependencies, works on all platforms) (default: ON)
+- `ENABLE_FFMPEG_BACKEND`: Enable FFmpeg backend support (default: OFF)
 - `ENABLE_GSTREAMER_BACKEND`: Enable GStreamer backend support (default: OFF)
 
 #### Platform-Specific Options
@@ -147,6 +150,27 @@ yaspb/
 ## Usage
 
 The library provides a clean API for streaming playback. See the `examples/` directory for usage examples (when built with `BUILD_EXAMPLES=ON`).
+
+### Quick Start (Mock Backend)
+
+The Mock backend is enabled by default and requires no external dependencies. You can build and use it immediately:
+
+```bash
+# Build with Mock backend (default)
+mkdir build && cd build
+cmake ..
+cmake --build .
+
+# The Mock backend provides a fully functional implementation
+# that simulates playback for testing and development
+```
+
+The Mock backend:
+- ✅ Works on all platforms (macOS, Linux, Windows, Raspberry Pi)
+- ✅ No external dependencies
+- ✅ Full API implementation
+- ✅ Simulates playback, events, and statistics
+- ✅ Perfect for testing and development
 
 ## Documentation
 

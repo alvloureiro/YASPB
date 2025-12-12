@@ -19,7 +19,8 @@ include(cmake/Platform.cmake)
 option(BUILD_SHARED_LIBS "Build shared library instead of static" ON)
 option(BUILD_TESTS "Build test executables" ON)
 option(BUILD_EXAMPLES "Build example executables" OFF)
-option(ENABLE_FFMPEG_BACKEND "Enable FFmpeg backend support" ON)
+option(ENABLE_MOCK_BACKEND "Enable Mock backend (no dependencies, default)" ON)
+option(ENABLE_FFMPEG_BACKEND "Enable FFmpeg backend support" OFF)
 option(ENABLE_GSTREAMER_BACKEND "Enable GStreamer backend support" OFF)
 
 # Platform-specific build options
@@ -71,7 +72,6 @@ configure_platform_linker_flags(playback)
 set_target_properties(playback PROPERTIES
     VERSION ${PROJECT_VERSION}
     SOVERSION ${PROJECT_VERSION_MAJOR}
-    PUBLIC_HEADER "${CMAKE_SOURCE_DIR}/include"
 )
 
 # Print platform information

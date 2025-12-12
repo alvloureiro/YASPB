@@ -21,10 +21,19 @@ function(configure_installation)
         LIBRARY DESTINATION lib
         ARCHIVE DESTINATION lib
         RUNTIME DESTINATION bin
-        PUBLIC_HEADER DESTINATION include
     )
 
     # Install backends if they exist
+    if(ENABLE_MOCK_BACKEND AND TARGET mock_backend)
+        install(
+            TARGETS mock_backend
+            EXPORT StreamingPlaybackTargets
+            LIBRARY DESTINATION lib
+            ARCHIVE DESTINATION lib
+            RUNTIME DESTINATION bin
+        )
+    endif()
+
     if(ENABLE_FFMPEG_BACKEND AND TARGET ffmpeg_backend)
         install(
             TARGETS ffmpeg_backend
