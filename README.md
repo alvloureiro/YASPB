@@ -87,12 +87,40 @@ yaspb/
 │   ├── core/               # Core implementation
 │   └── backends/           # Backend implementations
 ├── tests/                  # Test files
-└── examples/               # Example applications
+├── examples/               # Example applications
+└── docs/                   # Documentation
+    ├── API_ANALYSIS.md     # API architecture analysis
+    └── api-diagram.puml    # PlantUML API diagram
 ```
 
 ## Usage
 
 The library provides a clean API for streaming playback. See the `examples/` directory for usage examples (when built with `BUILD_EXAMPLES=ON`).
+
+## Documentation
+
+### API Documentation
+
+- **API Analysis**: See `docs/API_ANALYSIS.md` for a detailed analysis of the API architecture, components, and relationships.
+- **API Diagram**: A PlantUML diagram is available at `docs/api-diagram.puml` showing the relationships between all API components.
+
+To generate a visual diagram from the PlantUML file:
+```bash
+# Install PlantUML (if not already installed)
+# macOS: brew install plantuml
+# Linux: apt-get install plantuml
+
+# Generate PNG diagram
+plantuml docs/api-diagram.puml
+
+# Or use online tools like http://www.plantuml.com/plantuml/uml/
+```
+
+The diagram shows:
+- All interfaces and their methods
+- Data structures and their relationships
+- Enums and their values
+- Component dependencies and interactions
 
 ## Development
 

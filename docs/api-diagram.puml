@@ -1,0 +1,285 @@
+@startuml API Architecture Diagram
+
+!theme plain
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+
+package "playback::api" {
+    
+    ' Core Interfaces
+    interface IMediaSource {
+        +load(sourceUri: string): bool
+        +load(data: vector<uint8_t>): bool
+        +getAvailableFormats(): vector<MediaFormat>
+        +getAdaptiveStreams(): vector<AdaptiveStream>
+        +isLive(): bool
+        +isSeekable(): bool
+        +getDurationMs(): uint64_t
+        +hasDRM(): bool
+        +setDRMLicense(license: string): bool
+        +getTitle(): string
+        +getArtist(): string
+        +getAlbum(): string
+        +getThumbnail(): vector<uint8_t>
+    }
+    
+    interface IPlaybackController {
+        +play(): bool
+        +pause(): bool
+        +stop(): bool
+        +seek(positionMs: uint64_t): bool
+        +setPlaybackRate(rate: double): bool
+        +getPlaybackRate(): double
+        +setVolume(volume: double): bool
+        +getVolume(): double
+        +setQuality(format: MediaFormat): bool
+        +getCurrentQuality(): MediaFormat
+        +getAvailableQualities(): vector<MediaFormat>
+        +getStats(): PlaybackStats
+        +getState(): PlaybackState
+        +getCurrentPosition(): uint64_t
+        +getDuration(): uint64_t
+        +configure(config: PlaybackConfig): bool
+        +getConfig(): PlaybackConfig
+        +addEventListener(listener: IPlaybackEventListener): void
+        +removeEventListener(listener: IPlaybackEventListener): void
+        +getSessionId(): string
+    }
+    
+    interface IPlaybackEventListener {
+        +onPlaybackEvent(event: PlaybackEvent): void
+        +onVideoFrame(data: void*, size: size_t, format: VideoFormat): void
+        +onAudioData(data: void*, size: size_t, format: AudioFormat): void
+    }
+    
+    ' Data Structures
+    class MediaFormat {
+        +type: MediaType
+        +codec: Codec
+        +container: ContainerFormat
+        +video: optional<VideoFormat>
+        +audio: optional<AudioFormat>
+        +mimeType: string
+        +durationMs: uint64_t
+    }
+    
+    class VideoFormat {
+        +width: uint32_t
+        +height: uint32_t
+        +frameRate: double
+        +bitrate: uint32_t
+        +colorSpace: string
+        +rotation: optional<uint32_t>
+    }
+    
+    class AudioFormat {
+        +sampleRate: uint32_t
+        +channels: uint32_t
+        +bitrate: uint32_t
+        +channelLayout: string
+    }
+    
+    class AdaptiveStream {
+        +url: string
+        +bitrate: uint32_t
+        +format: MediaFormat
+        +codecs: string
+        +width: uint32_t
+        +height: uint32_t
+    }
+    
+    class PlaybackConfig {
+        +bufferSizeMs: uint32_t
+        +maxBufferSizeMs: uint32_t
+        +networkTimeoutMs: uint32_t
+        +maxRetries: uint32_t
+        +hardwareAcceleration: bool
+        +maxVideoWidth: uint32_t
+        +maxVideoHeight: uint32_t
+        +maxFrameRate: double
+        +audioSampleRate: uint32_t
+        +audioChannels: uint32_t
+        +adaptiveBitrate: bool
+        +initialBitrate: uint32_t
+        +maxBitrate: uint32_t
+        +qualitySwitchThreshold: double
+        +qualitySwitchCooldownMs: uint32_t
+        +enableSubtitles: bool
+        +defaultSubtitleLanguage: string
+        +cacheSizeBytes: size_t
+        +persistentCache: bool
+        +cacheDirectory: string
+        +logCallback: function
+        +downloadProgressCallback: function
+        +backendOptions: map<string, string>
+    }
+    
+    class PlaybackEvent {
+        +type: Type
+        +state: PlaybackState
+        +error: PlaybackError
+        +positionMs: uint64_t
+        +durationMs: uint64_t
+        +bufferLevel: double
+        +message: string
+    }
+    
+    class PlaybackStats {
+        +networkBandwidth: double
+        +framesPerSecond: double
+        +droppedFrames: double
+        +bytesDownloaded: uint64_t
+        +bufferHealth: double
+    }
+    
+    ' Enums
+    enum MediaType {
+        AUDIO
+        VIDEO
+        SUBTITLE
+    }
+    
+    enum Codec {
+        H264
+        H265
+        VP9
+        AV1
+        AAC
+        OPUS
+        MP3
+        UNKNOWN
+    }
+    
+    enum ContainerFormat {
+        MP4
+        MKV
+        WEBM
+        MPEGTS
+        DASH
+        HLS
+        UNKNOWN
+    }
+    
+    enum PlaybackState {
+        IDLE
+        BUFFERING
+        PLAYING
+        PAUSED
+        STOPPED
+        ENDED
+        ERROR
+    }
+    
+    enum PlaybackError {
+        NONE
+        NETWORK_ERROR
+        DECODE_ERROR
+        FORMAT_ERROR
+        DRM_ERROR
+        BUFFER_UNDERRUN
+    }
+    
+    enum PlaybackEvent.Type {
+        STATE_CHANGED
+        POSITION_CHANGED
+        BUFFERING_PROGRESS
+        QUALITY_CHANGED
+        ERROR_OCCURRED
+        METADATA_UPDATED
+        SEEK_COMPLETED
+    }
+}
+
+package "playback::backends" {
+    interface IPlaybackBackend {
+        +getName(): string
+        +getVersion(): string
+        +createController(source: IMediaSource, config: PlaybackConfig): IPlaybackController
+        +createMediaSource(): IMediaSource
+        +isSupported(format: MediaFormat): bool
+        +isHardwareAccelerationSupported(): bool
+        +initialize(): bool
+        +shutdown(): void
+    }
+}
+
+package "playback::core" {
+    class PlaybackEngine {
+        -backends_: map<string, unique_ptr<IPlaybackBackend>>
+        -defaultConfig_: PlaybackConfig
+        +registerBackend(backend: unique_ptr<IPlaybackBackend>): bool
+        +unregisterBackend(name: string): bool
+        +createController(backendName: string, source: IMediaSource, config: PlaybackConfig): unique_ptr<IPlaybackController>
+        +createAutoController(source: IMediaSource, config: PlaybackConfig): unique_ptr<IPlaybackController>
+        +getAvailableBackends(): vector<string>
+        +getBackend(name: string): shared_ptr<IPlaybackBackend>
+        +setDefaultConfig(config: PlaybackConfig): void
+        +getDefaultConfig(): PlaybackConfig
+    }
+}
+
+' Relationships
+PlaybackEngine "1" *-- "many" IPlaybackBackend : manages
+PlaybackEngine ..> IPlaybackController : creates
+PlaybackEngine ..> IMediaSource : uses
+PlaybackEngine ..> PlaybackConfig : uses
+
+IPlaybackBackend ..> IPlaybackController : creates
+IPlaybackBackend ..> IMediaSource : creates
+IPlaybackBackend ..> MediaFormat : uses
+IPlaybackBackend ..> PlaybackConfig : uses
+
+IPlaybackController "1" *-- "many" IPlaybackEventListener : notifies
+IPlaybackController ..> MediaFormat : uses
+IPlaybackController ..> PlaybackConfig : uses
+IPlaybackController ..> PlaybackStats : returns
+IPlaybackController ..> PlaybackState : returns
+
+IMediaSource ..> MediaFormat : returns
+IMediaSource ..> AdaptiveStream : returns
+
+IPlaybackEventListener ..> PlaybackEvent : receives
+IPlaybackEventListener ..> VideoFormat : receives
+IPlaybackEventListener ..> AudioFormat : receives
+
+MediaFormat "1" *-- "0..1" VideoFormat : contains
+MediaFormat "1" *-- "0..1" AudioFormat : contains
+MediaFormat ..> MediaType : uses
+MediaFormat ..> Codec : uses
+MediaFormat ..> ContainerFormat : uses
+
+AdaptiveStream "1" *-- "1" MediaFormat : contains
+
+PlaybackEvent ..> PlaybackState : uses
+PlaybackEvent ..> PlaybackError : uses
+PlaybackEvent ..> PlaybackEvent.Type : uses
+
+PlaybackConfig ..> function : contains
+
+note right of PlaybackEngine
+  Main entry point for the library.
+  Manages multiple backends and
+  creates controllers for playback.
+end note
+
+note right of IPlaybackBackend
+  Implemented by concrete backends:
+  - FFmpegBackend
+  - GStreamerBackend
+  - (future backends)
+end note
+
+note right of IPlaybackController
+  Controls playback operations:
+  play, pause, seek, quality,
+  volume, statistics, etc.
+end note
+
+note right of IMediaSource
+  Represents a media source
+  (file, URL, stream, etc.)
+  Provides metadata and format info
+end note
+
+@enduml
+
