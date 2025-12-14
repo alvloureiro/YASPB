@@ -54,6 +54,16 @@ function(configure_installation)
         )
     endif()
 
+    if(ENABLE_AVFOUNDATION_BACKEND AND PLATFORM_APPLE AND TARGET apple_backend)
+        install(
+            TARGETS apple_backend
+            EXPORT StreamingPlaybackTargets
+            LIBRARY DESTINATION lib
+            ARCHIVE DESTINATION lib
+            RUNTIME DESTINATION bin
+        )
+    endif()
+
     # Install CMake package configuration
     install(
         EXPORT StreamingPlaybackTargets

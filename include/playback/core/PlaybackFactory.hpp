@@ -13,9 +13,14 @@ class PlaybackFactory {
     static std::unique_ptr<PlaybackEngine> createEngine();
 
     // Methods to create specific backends
+#ifdef ENABLE_MOCK_BACKEND
     static std::unique_ptr<IPlaybackBackend> createMockBackend();
+#endif
     static std::unique_ptr<IPlaybackBackend> createFFmpegBackend();
     static std::unique_ptr<IPlaybackBackend> createGStreamerBackend();
+#ifdef ENABLE_AVFOUNDATION_BACKEND
+    static std::unique_ptr<IPlaybackBackend> createAppleBackend();
+#endif
 
     // Creation of default configurations for different use cases
     static PlaybackConfig createLowLatencyConfig();

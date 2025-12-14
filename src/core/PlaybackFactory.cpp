@@ -6,27 +6,47 @@
 
 namespace playback {
 
-// Forward declaration for factory function from MockBackend
-// This function is defined in MockBackend.cpp
-std::unique_ptr<IPlaybackBackend> createMockBackendFactory();
+// Forward declarations for factory functions from backends
+// These functions are defined in backend implementation files
+// They are in the playback namespace in their implementation files
+// Only declare if the backend is enabled
+#ifdef ENABLE_MOCK_BACKEND
+extern std::unique_ptr<IPlaybackBackend> createMockBackendFactory();
+#endif
+
+#ifdef ENABLE_AVFOUNDATION_BACKEND
+// Apple backend factory (Apple platforms only)
+extern std::unique_ptr<IPlaybackBackend> createAppleBackendFactory();
+#endif
 
 std::unique_ptr<PlaybackEngine> PlaybackFactory::createEngine() {
     auto engine = std::make_unique<PlaybackEngine>();
 
-    // Register default backends
-    // Mock backend is always available (no dependencies)
+    // Register enabled backends
+#ifdef ENABLE_MOCK_BACKEND
+    // Mock backend (no dependencies)
     if (auto mockBackend = createMockBackend()) {
         engine->registerBackend(std::move(mockBackend));
     }
+#endif
+
+#ifdef ENABLE_AVFOUNDATION_BACKEND
+    // Apple backend on Apple platforms
+    if (auto appleBackend = createAppleBackend()) {
+        engine->registerBackend(std::move(appleBackend));
+    }
+#endif
 
     return engine;
 }
 
+#ifdef ENABLE_MOCK_BACKEND
 std::unique_ptr<IPlaybackBackend> PlaybackFactory::createMockBackend() {
     // Use factory function from MockBackend
     // This avoids circular dependency issues
     return createMockBackendFactory();
 }
+#endif
 
 std::unique_ptr<IPlaybackBackend> PlaybackFactory::createFFmpegBackend() {
     // TODO: Implement FFmpeg backend creation
@@ -39,6 +59,12 @@ std::unique_ptr<IPlaybackBackend> PlaybackFactory::createGStreamerBackend() {
     // This will be implemented when GStreamer backend is added
     return nullptr;
 }
+
+#ifdef ENABLE_AVFOUNDATION_BACKEND
+std::unique_ptr<IPlaybackBackend> PlaybackFactory::createAppleBackend() {
+    return createAppleBackendFactory();
+}
+#endif
 
 PlaybackConfig PlaybackFactory::createLowLatencyConfig() {
     PlaybackConfig config;

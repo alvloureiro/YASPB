@@ -13,7 +13,7 @@ function(configure_backends)
     if(ENABLE_MOCK_BACKEND)
         add_backend(
             NAME mock
-            SOURCE src/backends/MockBackend.cpp
+            SOURCE src/backends/mock/MockBackend.cpp
         )
         message(STATUS "Mock backend enabled (no external dependencies)")
     endif()
@@ -43,8 +43,27 @@ function(configure_backends)
         )
     endif()
 
+    # Apple Backend (Apple platforms only)
+    # Configured in separate module for better organization
+    include(cmake/AppleBackend.cmake)
+    configure_apple_backend()
+
     # Warn if no backends are enabled
-    if(NOT ENABLE_MOCK_BACKEND AND NOT ENABLE_FFMPEG_BACKEND AND NOT ENABLE_GSTREAMER_BACKEND)
+    set(ANY_BACKEND_ENABLED FALSE)
+    if(ENABLE_MOCK_BACKEND)
+        set(ANY_BACKEND_ENABLED TRUE)
+    endif()
+    if(ENABLE_FFMPEG_BACKEND)
+        set(ANY_BACKEND_ENABLED TRUE)
+    endif()
+    if(ENABLE_GSTREAMER_BACKEND)
+        set(ANY_BACKEND_ENABLED TRUE)
+    endif()
+    if(ENABLE_AVFOUNDATION_BACKEND AND PLATFORM_APPLE)
+        set(ANY_BACKEND_ENABLED TRUE)
+    endif()
+
+    if(NOT ANY_BACKEND_ENABLED)
         message(WARNING "No backends enabled! Enable at least one backend (ENABLE_MOCK_BACKEND is recommended)")
     endif()
 endfunction()
@@ -63,8 +82,8 @@ endfunction()
 #=============================================================================
 function(add_backend)
     set(options "")
-    set(oneValueArgs NAME SOURCE)
-    set(multiValueArgs LINK_LIBRARIES INCLUDE_DIRS)
+    set(oneValueArgs NAME)
+    set(multiValueArgs SOURCE LINK_LIBRARIES INCLUDE_DIRS)
     cmake_parse_arguments(BACKEND "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
     if(NOT BACKEND_NAME)
@@ -78,15 +97,27 @@ function(add_backend)
     # Create backend library
     add_library(${BACKEND_NAME}_backend ${BACKEND_SOURCE})
 
-    # Link to core playback library (except for mock which doesn't need linking)
-    # Mock backend only needs headers, not the library itself
-    if(NOT BACKEND_NAME STREQUAL "mock")
+    # Handle Objective-C++ files (.mm) for Apple backends
+    # Need to check each source file individually since BACKEND_SOURCE is a list
+    foreach(SOURCE_FILE ${BACKEND_SOURCE})
+        if(SOURCE_FILE MATCHES "\\.mm$")
+            # Set language to OBJCXX for .mm files
+            set_source_files_properties(${SOURCE_FILE} PROPERTIES
+                LANGUAGE OBJCXX
+            )
+        endif()
+    endforeach()
+
+    # Link to core playback library (except for mock and apple which don't need linking)
+    # These backends only need headers, not the library itself
+    # This avoids circular dependencies since playback links to these backends
+    if(NOT BACKEND_NAME STREQUAL "mock" AND NOT BACKEND_NAME STREQUAL "apple")
         target_link_libraries(${BACKEND_NAME}_backend
             PUBLIC
                 playback
         )
     else()
-        # Mock backend only needs include directories
+        # Mock and Apple backends only need include directories
         target_include_directories(${BACKEND_NAME}_backend
             PUBLIC
                 $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>

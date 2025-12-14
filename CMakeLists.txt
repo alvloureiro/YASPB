@@ -3,17 +3,24 @@
 #=============================================================================
 
 cmake_minimum_required(VERSION 3.16)
-project(StreamingPlayback 
-    VERSION 1.0.0 
-    DESCRIPTION "Streaming Playback Library"
-    LANGUAGES CXX
-)
 
 # Add cmake modules directory
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 
-# Include platform configuration
+# Include platform configuration (needed before project() to set PLATFORM_APPLE)
 include(cmake/Platform.cmake)
+
+# Determine languages needed
+set(PROJECT_LANGUAGES CXX)
+if(APPLE)
+    list(APPEND PROJECT_LANGUAGES OBJCXX)
+endif()
+
+project(StreamingPlayback
+    VERSION 1.0.0
+    DESCRIPTION "Streaming Playback Library"
+    LANGUAGES ${PROJECT_LANGUAGES}
+)
 
 # Build options
 option(BUILD_SHARED_LIBS "Build shared library instead of static" ON)
@@ -22,6 +29,9 @@ option(BUILD_EXAMPLES "Build example executables" OFF)
 option(ENABLE_MOCK_BACKEND "Enable Mock backend (no dependencies, default)" ON)
 option(ENABLE_FFMPEG_BACKEND "Enable FFmpeg backend support" OFF)
 option(ENABLE_GSTREAMER_BACKEND "Enable GStreamer backend support" OFF)
+if(PLATFORM_APPLE)
+    option(ENABLE_AVFOUNDATION_BACKEND "Enable AVFoundation backend (Apple platforms only)" ON)
+endif()
 
 # Platform-specific build options
 if(PLATFORM_LINUX)
@@ -43,6 +53,23 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+# Define preprocessor macros for enabled backends (for conditional compilation)
+if(ENABLE_MOCK_BACKEND)
+    add_definitions(-DENABLE_MOCK_BACKEND)
+endif()
+
+if(ENABLE_AVFOUNDATION_BACKEND AND PLATFORM_APPLE)
+    add_definitions(-DENABLE_AVFOUNDATION_BACKEND)
+endif()
+
+if(ENABLE_FFMPEG_BACKEND)
+    add_definitions(-DENABLE_FFMPEG_BACKEND)
+endif()
+
+if(ENABLE_GSTREAMER_BACKEND)
+    add_definitions(-DENABLE_GSTREAMER_BACKEND)
+endif()
+
 # Output directories
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
@@ -52,7 +79,7 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # Collect source files
-file(GLOB_RECURSE CORE_SOURCES 
+file(GLOB_RECURSE CORE_SOURCES
     "${CMAKE_SOURCE_DIR}/src/core/*.cpp"
 )
 
@@ -81,10 +108,14 @@ print_platform_info()
 include(cmake/Backends.cmake)
 configure_backends()
 
-# Link mock_backend to playback library if enabled (needed for PlaybackFactory)
-# This is safe because mock_backend doesn't link back to playback
+# Link backends to playback library if enabled (needed for PlaybackFactory)
+# This is safe because backends don't link back to playback
 if(ENABLE_MOCK_BACKEND AND TARGET mock_backend)
     target_link_libraries(playback PRIVATE mock_backend)
+endif()
+
+if(ENABLE_AVFOUNDATION_BACKEND AND PLATFORM_APPLE AND TARGET apple_backend)
+    target_link_libraries(playback PRIVATE apple_backend)
 endif()
 
 if(BUILD_TESTS)
