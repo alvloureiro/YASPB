@@ -18,7 +18,7 @@ StreamingPlayback is a library designed to provide a clean, extensible interface
 
 - **Language**: C++17
 - **Build System**: CMake (3.16+)
-- **Backends**: 
+- **Backends**:
   - **Mock** (default, no dependencies, works on all platforms)
   - FFmpeg (optional, requires FFmpeg libraries)
   - GStreamer (optional, requires GStreamer libraries)
@@ -49,6 +49,8 @@ cmake --build .
 
 # Run tests (if enabled)
 ctest
+# Or run directly:
+./bin/playback_tests
 ```
 
 #### Windows
@@ -196,6 +198,64 @@ The diagram shows:
 - Data structures and their relationships
 - Enums and their values
 - Component dependencies and interactions
+
+## Testing
+
+The project uses Google Test (GTest) for unit testing. Tests are automatically discovered and can be run with CTest.
+
+### Prerequisites for Testing
+
+Google Test (GTest) is required for running tests. It will be automatically fetched if not found, but you can also install it manually:
+
+**macOS:**
+```bash
+brew install googletest
+```
+
+**Linux (Ubuntu/Debian):**
+```bash
+sudo apt-get install libgtest-dev
+```
+
+**Or set GTEST_ROOT:**
+```bash
+export GTEST_ROOT=/path/to/gtest
+```
+
+### Running Tests
+
+```bash
+# Build with tests enabled (default)
+mkdir build && cd build
+cmake .. -DBUILD_TESTS=ON
+cmake --build .
+
+# Run all tests
+ctest
+
+# Run tests with verbose output
+ctest --verbose
+
+# Run tests directly
+./bin/playback_tests
+
+# Run specific test
+./bin/playback_tests --gtest_filter=MediaSourceTest.*
+
+# Disable tests if GTest is not available
+cmake .. -DBUILD_TESTS=OFF
+```
+
+### Test Structure
+
+Tests are organized by component:
+- `test_api_mediasource.cpp` - Tests for IMediaSource interface
+- `test_api_playbackcontroller.cpp` - Tests for IPlaybackController interface
+- `test_backends.cpp` - Tests for IPlaybackBackend interface
+- `test_core_playbackengine.cpp` - Tests for PlaybackEngine
+- `test_core_playbackfactory.cpp` - Tests for PlaybackFactory
+
+All tests use the Mock backend for testing, which requires no external dependencies.
 
 ## Development
 

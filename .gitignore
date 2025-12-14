@@ -6,6 +6,10 @@ cmake-build-*/
 build-rpi/
 build-windows/
 build-linux/
+build-macos/
+build-test/
+build-examples/
+build-*/
 
 # CMake generated files
 CMakeCache.txt
