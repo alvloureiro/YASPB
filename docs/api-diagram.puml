@@ -5,7 +5,7 @@ skinparam classAttributeIconSize 0
 skinparam shadowing false
 
 package "playback::api" {
-    
+
     ' Core Interfaces
     interface IMediaSource {
         +load(sourceUri: string): bool
@@ -22,7 +22,7 @@ package "playback::api" {
         +getAlbum(): string
         +getThumbnail(): vector<uint8_t>
     }
-    
+
     interface IPlaybackController {
         +play(): bool
         +pause(): bool
@@ -45,13 +45,13 @@ package "playback::api" {
         +removeEventListener(listener: IPlaybackEventListener): void
         +getSessionId(): string
     }
-    
+
     interface IPlaybackEventListener {
         +onPlaybackEvent(event: PlaybackEvent): void
         +onVideoFrame(data: void*, size: size_t, format: VideoFormat): void
         +onAudioData(data: void*, size: size_t, format: AudioFormat): void
     }
-    
+
     ' Data Structures
     class MediaFormat {
         +type: MediaType
@@ -62,7 +62,7 @@ package "playback::api" {
         +mimeType: string
         +durationMs: uint64_t
     }
-    
+
     class VideoFormat {
         +width: uint32_t
         +height: uint32_t
@@ -71,14 +71,14 @@ package "playback::api" {
         +colorSpace: string
         +rotation: optional<uint32_t>
     }
-    
+
     class AudioFormat {
         +sampleRate: uint32_t
         +channels: uint32_t
         +bitrate: uint32_t
         +channelLayout: string
     }
-    
+
     class AdaptiveStream {
         +url: string
         +bitrate: uint32_t
@@ -87,7 +87,7 @@ package "playback::api" {
         +width: uint32_t
         +height: uint32_t
     }
-    
+
     class PlaybackConfig {
         +bufferSizeMs: uint32_t
         +maxBufferSizeMs: uint32_t
@@ -113,9 +113,9 @@ package "playback::api" {
         +downloadProgressCallback: function
         +backendOptions: map<string, string>
     }
-    
+
     class PlaybackEvent {
-        +type: Type
+        +type: PlaybackEventType
         +state: PlaybackState
         +error: PlaybackError
         +positionMs: uint64_t
@@ -123,7 +123,7 @@ package "playback::api" {
         +bufferLevel: double
         +message: string
     }
-    
+
     class PlaybackStats {
         +networkBandwidth: double
         +framesPerSecond: double
@@ -131,14 +131,14 @@ package "playback::api" {
         +bytesDownloaded: uint64_t
         +bufferHealth: double
     }
-    
+
     ' Enums
     enum MediaType {
         AUDIO
         VIDEO
         SUBTITLE
     }
-    
+
     enum Codec {
         H264
         H265
@@ -149,7 +149,7 @@ package "playback::api" {
         MP3
         UNKNOWN
     }
-    
+
     enum ContainerFormat {
         MP4
         MKV
@@ -159,7 +159,7 @@ package "playback::api" {
         HLS
         UNKNOWN
     }
-    
+
     enum PlaybackState {
         IDLE
         BUFFERING
@@ -169,7 +169,7 @@ package "playback::api" {
         ENDED
         ERROR
     }
-    
+
     enum PlaybackError {
         NONE
         NETWORK_ERROR
@@ -178,8 +178,8 @@ package "playback::api" {
         DRM_ERROR
         BUFFER_UNDERRUN
     }
-    
-    enum PlaybackEvent.Type {
+
+    enum PlaybackEventType {
         STATE_CHANGED
         POSITION_CHANGED
         BUFFERING_PROGRESS
@@ -252,7 +252,7 @@ AdaptiveStream "1" *-- "1" MediaFormat : contains
 
 PlaybackEvent ..> PlaybackState : uses
 PlaybackEvent ..> PlaybackError : uses
-PlaybackEvent ..> PlaybackEvent.Type : uses
+PlaybackEvent ..> PlaybackEventType : uses
 
 PlaybackConfig ..> function : contains
 
