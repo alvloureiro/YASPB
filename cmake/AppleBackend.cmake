@@ -14,7 +14,7 @@ function(configure_apple_backend)
     add_backend(
         NAME apple
         SOURCE
-            src/backends/impl/AppleBackendImpl.cpp
+            src/backends/apple/impl/AppleBackendImpl.cpp
             src/backends/apple/ApplePlaybackController.cpp
             src/backends/apple/AVFoundationWrapper.mm
     )
