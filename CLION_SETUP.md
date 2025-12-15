@@ -15,16 +15,21 @@ This guide will help you set up the project in CLion to easily run the `apple_au
 
 CLion will automatically detect the `CMakeLists.txt` file. The project includes `CMakePresets.json` which makes configuration easier.
 
+**Important**: If you see a generator mismatch error (Ninja vs Unix Makefiles), clean the build directory first:
+- Delete the `cmake-build-debug` folder, or
+- In CLion: **File → Invalidate Caches... → Invalidate and Restart**
+
 #### Option A: Use CMake Presets (Recommended)
 
 1. In CLion, go to **File → Settings** (or **CLion → Preferences** on macOS)
 2. Navigate to **Build, Execution, Deployment → CMake**
 3. You should see the presets from `CMakePresets.json`:
-   - **default** - Debug build with examples enabled
-   - **debug** - Debug build
-   - **release** - Release build
+   - **default** - Debug build with examples enabled (uses Ninja)
+   - **debug** - Debug build (uses Ninja)
+   - **release** - Release build (uses Ninja)
 
 4. Select the **default** or **debug** preset (both have `BUILD_EXAMPLES=ON`)
+5. Make sure the **Generator** is set to **Ninja** (CLion's default and recommended)
 
 #### Option B: Manual CMake Configuration
 
@@ -34,6 +39,7 @@ CLion will automatically detect the `CMakeLists.txt` file. The project includes 
 4. Set:
    - **Name**: Debug
    - **Build type**: Debug
+   - **Generator**: Ninja (recommended) or Unix Makefiles
    - **CMake options**: `-DBUILD_EXAMPLES=ON -DENABLE_AVFOUNDATION_BACKEND=ON`
    - **Build directory**: `cmake-build-debug`
 

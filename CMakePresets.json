@@ -10,7 +10,7 @@
       "name": "default",
       "displayName": "Default Config",
       "description": "Default build configuration with examples enabled",
-      "generator": "Unix Makefiles",
+      "generator": "Ninja",
       "binaryDir": "${sourceDir}/cmake-build-debug",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
@@ -24,7 +24,7 @@
       "name": "debug",
       "displayName": "Debug",
       "description": "Debug build with examples enabled",
-      "generator": "Unix Makefiles",
+      "generator": "Ninja",
       "binaryDir": "${sourceDir}/cmake-build-debug",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
@@ -38,7 +38,7 @@
       "name": "release",
       "displayName": "Release",
       "description": "Release build with examples enabled",
-      "generator": "Unix Makefiles",
+      "generator": "Ninja",
       "binaryDir": "${sourceDir}/cmake-build-release",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",

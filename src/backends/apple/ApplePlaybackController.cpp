@@ -1,6 +1,7 @@
 #include "playback/backends/apple/ApplePlaybackController.hpp"
 
 #include <algorithm>
+#include <iostream>
 #include <memory>
 #include <mutex>
 #include <random>
@@ -59,6 +60,7 @@ bool ApplePlaybackController::seek(uint64_t positionMs) {
 }
 
 bool ApplePlaybackController::setVolume(double volume) {
+    std::cout << "ApplePlaybackController::setVolume " << volume << std::endl;
     return player_->setVolume(volume);
 }
 

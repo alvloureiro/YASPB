@@ -14,6 +14,9 @@
 #include "playback/core/PlaybackFactory.hpp"
 
 #ifdef __APPLE__
+// Forward declaration - we'll use a helper function instead of importing Foundation
+extern "C" void processRunLoop(double seconds);
+#endif
 
 using namespace playback;
 
@@ -129,6 +132,7 @@ void printPlaybackInfo(std::unique_ptr<IPlaybackController>& controller) {
     std::cout << "=============================\n" << std::endl;
 }
 
+#ifdef __APPLE__
 int main(int argc, char* argv[]) {
     if (argc < 2) {
         printUsage(argv[0]);
@@ -204,6 +208,7 @@ int main(int argc, char* argv[]) {
             return 1;
         }
 
+        std::cout << "Loading media file: " << audioFilePath << std::endl;
         if (!appleController->loadMedia(audioFilePath)) {
             std::cerr << "Failed to load media file: " << audioFilePath << std::endl;
             return 1;
@@ -213,8 +218,61 @@ int main(int argc, char* argv[]) {
         auto eventListener = std::make_shared<ExampleEventListener>();
         controller->addEventListener(eventListener);
 
-        // Wait a bit for the media to load
-        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        // Wait for the media to be ready to play
+        std::cout << "Waiting for media to be ready..." << std::endl;
+        int maxWaitAttempts = 100;  // 10 seconds max (increased for slower loading)
+        int attempts = 0;
+        bool isReady = false;
+
+        while (attempts < maxWaitAttempts) {
+            auto state = controller->getState();
+
+            // PAUSED state means the player item is ready (status is ReadyToPlay) but not playing
+            // yet This is what we want - ready to play
+            if (state == PlaybackState::PAUSED) {
+                std::cout << "Media is ready! (PAUSED state means ReadyToPlay)" << std::endl;
+                isReady = true;
+                break;
+            }
+            if (state == PlaybackState::PLAYING) {
+                std::cout << "Media is already playing!" << std::endl;
+                isReady = true;
+                break;
+            }
+            if (state == PlaybackState::ERROR) {
+                std::cerr << "Error loading media! State: ERROR" << std::endl;
+                return 1;
+            }
+            if (state == PlaybackState::BUFFERING) {
+                // Still loading, continue waiting
+                if (attempts % 10 == 0) {  // Log every second
+                    std::cout << "Still buffering... (attempt " << attempts << "/"
+                              << maxWaitAttempts << ")" << std::endl;
+                }
+            }
+
+    // On macOS, process the run loop to allow AVFoundation to work
+    // This is critical for command-line apps
+    #ifdef __APPLE__
+            processRunLoop(0.1);  // Process run loop for 0.1 seconds
+    #else
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    #endif
+            attempts++;
+        }
+
+        if (!isReady) {
+            auto finalState = controller->getState();
+            std::cerr << "Timeout waiting for media to be ready after " << (attempts * 100) << "ms"
+                      << std::endl;
+            std::cerr << "Final state: " << static_cast<int>(finalState) << std::endl;
+            std::cerr << "Duration: " << controller->getDuration() << " ms" << std::endl;
+            return 1;
+        }
+
+        // Set volume to 1.0 (full volume) - volume range is 0.0 to 1.0
+        controller->setVolume(1.0);
+        std::cout << "Volume set to: " << controller->getVolume() << std::endl;
 
         // Print playback information
         printPlaybackInfo(controller);
@@ -223,11 +281,24 @@ int main(int argc, char* argv[]) {
         std::cout << "Starting playback..." << std::endl;
         if (!controller->play()) {
             std::cerr << "Failed to start playback" << std::endl;
+            std::cerr << "Current state: " << static_cast<int>(controller->getState()) << std::endl;
             return 1;
         }
 
-        // Wait for playback to start
-        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+        // Wait for playback to actually start
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+
+        // Verify playback started
+        auto playState = controller->getState();
+        std::cout << "Playback state after play(): " << static_cast<int>(playState) << std::endl;
+        if (playState != PlaybackState::PLAYING) {
+            std::cerr << "WARNING: Playback did not start. State is: "
+                      << static_cast<int>(playState) << std::endl;
+            std::cerr << "Duration: " << controller->getDuration() << " ms" << std::endl;
+            std::cerr << "Position: " << controller->getCurrentPosition() << " ms" << std::endl;
+        } else {
+            std::cout << "Playback started successfully!" << std::endl;
+        }
 
         // Monitor playback
         std::cout << "\nPlayback started. Press Enter to pause, then Enter again to resume..."

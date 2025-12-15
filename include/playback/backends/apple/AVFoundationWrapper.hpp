@@ -23,12 +23,12 @@ namespace playback::apple {
 class AVFPlayerImpl;
 
 struct AVFCallbacks {
-    std::function<void(playback::PlaybackState)> onStateChanged;
+    std::function<void(PlaybackState)> onStateChanged;
     std::function<void(uint64_t)> onPositionChanged;
     std::function<void(double)> onBufferProgress;
     std::function<void(const std::string&)> onError;
-    std::function<void(const playback::VideoFormat&)> onVideoFormatChanged;
-    std::function<void(const playback::AudioFormat&)> onAudioFormatChanged;
+    std::function<void(const VideoFormat&)> onVideoFormatChanged;
+    std::function<void(const AudioFormat&)> onAudioFormatChanged;
 };
 
 // Wrapper C++ puro para AVFoundation
@@ -51,12 +51,12 @@ class AVFPlayerWrapper {
     bool setPlaybackRate(double rate);
     double getPlaybackRate() const;
 
-    playback::PlaybackState getState() const;
+    PlaybackState getState() const;
     uint64_t getCurrentPosition() const;
     uint64_t getDuration() const;
 
-    playback::MediaFormat getCurrentFormat() const;
-    std::vector<playback::MediaFormat> getAvailableFormats() const;
+    MediaFormat getCurrentFormat() const;
+    std::vector<MediaFormat> getAvailableFormats() const;
 
     void setAudioSessionCategory(const std::string& category);
     void setAudioSessionMode(const std::string& mode);
