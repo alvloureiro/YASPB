@@ -10,7 +10,7 @@
 function(add_examples)
     # Collect all example source files
     file(GLOB EXAMPLE_SOURCES "${CMAKE_SOURCE_DIR}/examples/*.cpp")
-    
+
     if(NOT EXAMPLE_SOURCES)
         message(STATUS "No example files found in examples/ directory")
         return()
@@ -19,7 +19,7 @@ function(add_examples)
     # Add each example file as a separate executable
     foreach(EXAMPLE_SOURCE ${EXAMPLE_SOURCES})
         get_filename_component(EXAMPLE_NAME ${EXAMPLE_SOURCE} NAME_WE)
-        
+
         add_example_executable(
             NAME ${EXAMPLE_NAME}
             SOURCE ${EXAMPLE_SOURCE}
@@ -51,20 +51,42 @@ function(add_example_executable)
 
     # Create example executable
     add_executable(${EXAMPLE_NAME} ${EXAMPLE_SOURCE})
-    
+
+    # Add examples directory to include path (for example-specific headers)
+    target_include_directories(${EXAMPLE_NAME}
+        PRIVATE
+            ${CMAKE_SOURCE_DIR}/examples
+    )
+
     # Link to core playback library
-    target_link_libraries(${EXAMPLE_NAME} 
-        PRIVATE 
+    target_link_libraries(${EXAMPLE_NAME}
+        PRIVATE
             playback
     )
 
+    # Link to specific backends if the example needs them
+    # apple_audio_example needs apple_backend for ApplePlaybackController
+    if(EXAMPLE_NAME STREQUAL "apple_audio_example" AND TARGET apple_backend)
+        target_link_libraries(${EXAMPLE_NAME}
+            PRIVATE
+                apple_backend
+        )
+        message(STATUS "  Linked ${EXAMPLE_NAME} to apple_backend")
+    endif()
+
     # Add additional libraries if provided
     if(EXAMPLE_LINK_LIBRARIES)
-        target_link_libraries(${EXAMPLE_NAME} 
-            PRIVATE 
+        target_link_libraries(${EXAMPLE_NAME}
+            PRIVATE
                 ${EXAMPLE_LINK_LIBRARIES}
         )
     endif()
+
+    # Set properties for better IDE integration (CLion, etc.)
+    set_target_properties(${EXAMPLE_NAME} PROPERTIES
+        FOLDER "Examples"
+        RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+    )
 
     message(STATUS "Added example: ${EXAMPLE_NAME}")
 endfunction()

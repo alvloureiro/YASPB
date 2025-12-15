@@ -34,12 +34,8 @@ ApplePlaybackController::ApplePlaybackController(std::shared_ptr<IMediaSource> s
     player_->setCallbacks(callbacks);
 
     // Load media from source if available
-    if (source_) {
-        // Try to get URL from source
-        // For now, we'll need the source to provide the URL
-        // This is a limitation - in a full implementation, we'd need to
-        // get the source URI or data from the IMediaSource
-    }
+    // Note: The source needs to be loaded first with load() before creating the controller
+    // Or use loadMedia() method after creation
 }
 
 // IPlaybackController implementation
@@ -152,6 +148,16 @@ void ApplePlaybackController::removeEventListener(
 
 std::string ApplePlaybackController::getSessionId() const {
     return sessionId_;
+}
+
+bool ApplePlaybackController::loadMedia(const std::string& filePathOrUrl) {
+    if (!player_) {
+        return false;
+    }
+
+    // AVFPlayerWrapper::load() can handle both file paths and URLs
+    // It will automatically detect file paths and convert them properly
+    return player_->load(filePathOrUrl);
 }
 
 // Private helper methods

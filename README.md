@@ -257,6 +257,23 @@ Tests are organized by component:
 
 All tests use the Mock backend for testing, which requires no external dependencies.
 
+## IDE Setup
+
+### CLion
+
+The project is configured for easy use with CLion. See [CLION_SETUP.md](CLION_SETUP.md) for detailed instructions.
+
+**Quick Start:**
+1. Open the project in CLion
+2. CLion will automatically detect `CMakeLists.txt` and `CMakePresets.json`
+3. Select the **default** or **debug** CMake preset (both have `BUILD_EXAMPLES=ON`)
+4. Reload CMake project
+5. Find `apple_audio_example` in the CMake tool window
+6. Set program arguments to an audio file path (e.g., `/System/Library/Sounds/Glass.aiff`)
+7. Click the play button to run!
+
+The example will automatically be available as a run configuration once CMake is configured.
+
 ## Development
 
 ### Code Style

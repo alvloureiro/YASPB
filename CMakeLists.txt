@@ -25,7 +25,14 @@ project(StreamingPlayback
 # Build options
 option(BUILD_SHARED_LIBS "Build shared library instead of static" ON)
 option(BUILD_TESTS "Build test executables" ON)
-option(BUILD_EXAMPLES "Build example executables" OFF)
+# Enable examples by default when using CLion or when explicitly requested
+# CLion sets CMAKE_GENERATOR to "Unix Makefiles" or "Ninja", so we check for that
+# Also check for CLion-specific environment variables
+if(CMAKE_GENERATOR MATCHES "Unix Makefiles|Ninja|Xcode|Visual Studio" OR DEFINED ENV{CLION_IDE} OR DEFINED ENV{JETBRAINS_IDE})
+    option(BUILD_EXAMPLES "Build example executables" ON)
+else()
+    option(BUILD_EXAMPLES "Build example executables" OFF)
+endif()
 option(ENABLE_MOCK_BACKEND "Enable Mock backend (no dependencies, default)" ON)
 option(ENABLE_FFMPEG_BACKEND "Enable FFmpeg backend support" OFF)
 option(ENABLE_GSTREAMER_BACKEND "Enable GStreamer backend support" OFF)

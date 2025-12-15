@@ -56,7 +56,16 @@ AVFPlayerWrapper::~AVFPlayerWrapper() = default;
 bool AVFPlayerWrapper::load(const std::string& url) {
     @autoreleasepool {
         NSString* nsUrl = [NSString stringWithUTF8String:url.c_str()];
-        NSURL* assetUrl = [NSURL URLWithString:nsUrl];
+        NSURL* assetUrl = nil;
+
+        // Check if it's a file path (doesn't contain ://)
+        if ([nsUrl rangeOfString:@"://"].location == NSNotFound) {
+            // It's a file path, use fileURLWithPath
+            assetUrl = [NSURL fileURLWithPath:nsUrl];
+        } else {
+            // It's a URL, use URLWithString
+            assetUrl = [NSURL URLWithString:nsUrl];
+        }
 
         if (!assetUrl) return false;
 

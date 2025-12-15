@@ -1,0 +1,12 @@
+# Example program arguments for apple_audio_example
+# Copy this file content to CLion's run configuration "Program arguments" field
+# Or set it as default in the run configuration
+
+# Example: Use a sample audio file (update path to your actual audio file)
+# /path/to/your/audio/file.mp3
+
+# Or use a file from macOS system sounds (example):
+# /System/Library/Sounds/Glass.aiff
+
+# Note: You need to provide a valid audio file path as the first argument
+

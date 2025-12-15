@@ -56,6 +56,10 @@ class ApplePlaybackController : public IPlaybackController {
 
     std::string getSessionId() const override;
 
+    // Helper method to load media from a file path or URL
+    // This is useful when the media source doesn't expose the URI directly
+    bool loadMedia(const std::string& filePathOrUrl);
+
    private:
     // Private helper methods
     void notifyStateChanged(PlaybackState state);
