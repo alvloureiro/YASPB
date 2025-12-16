@@ -1,4 +1,4 @@
-# StreamingPlayback (yaspb)
+# Yet Another StreamingPlayback (yaspb)
 
 A personal project to bring to life a modern C++ API for realtime streaming playback.
 
