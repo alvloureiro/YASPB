@@ -3,7 +3,7 @@
 #=============================================================================
 # This module handles the configuration and building of test executables using Google Test.
 # To add a new test:
-#   1. Create a test file in tests/ directory
+#   1. Create a test file in tests/mock/ directory (for mock backend tests)
 #   2. Use Google Test macros (TEST, TEST_F, etc.)
 #=============================================================================
 
@@ -26,11 +26,11 @@ function(add_tests)
         FetchContent_MakeAvailable(googletest)
     endif()
 
-    # Collect all test source files
-    file(GLOB TEST_SOURCES "${CMAKE_SOURCE_DIR}/tests/*.cpp")
+    # Collect all test source files from tests/mock/ directory
+    file(GLOB TEST_SOURCES "${CMAKE_SOURCE_DIR}/tests/mock/*.cpp")
 
     if(NOT TEST_SOURCES)
-        message(STATUS "No test files found in tests/ directory")
+        message(STATUS "No test files found in tests/mock/ directory")
         return()
     endif()
 
