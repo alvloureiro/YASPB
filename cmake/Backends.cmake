@@ -13,7 +13,10 @@ function(configure_backends)
     if(ENABLE_MOCK_BACKEND)
         add_backend(
             NAME mock
-            SOURCE src/backends/mock/MockBackend.cpp
+            SOURCE
+                src/backends/mock/MockBackend.cpp
+                src/backends/mock/MockMediaSource.cpp
+                src/backends/mock/MockPlaybackController.cpp
         )
         message(STATUS "Mock backend enabled (no external dependencies)")
     endif()
@@ -122,6 +125,13 @@ function(add_backend)
             PUBLIC
                 $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>
         )
+        # Add backend-specific include directory for internal headers
+        if(BACKEND_NAME STREQUAL "mock")
+            target_include_directories(${BACKEND_NAME}_backend
+                PRIVATE
+                    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/src/backends/mock>
+            )
+        endif()
     endif()
 
     # Add external libraries if provided
