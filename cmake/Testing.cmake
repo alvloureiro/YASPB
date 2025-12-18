@@ -105,7 +105,10 @@ function(add_tests)
 
     # Collect test source files from tests/apple/ directory (Apple platforms only)
     if(PLATFORM_APPLE AND ENABLE_AVFOUNDATION_BACKEND)
-        file(GLOB APPLE_TEST_SOURCES "${CMAKE_SOURCE_DIR}/tests/apple/*.cpp")
+        file(GLOB APPLE_TEST_SOURCES
+            "${CMAKE_SOURCE_DIR}/tests/apple/*.cpp"
+            "${CMAKE_SOURCE_DIR}/tests/apple/*.mm"
+        )
 
         if(APPLE_TEST_SOURCES)
             # Create Apple backend tests executable
@@ -119,10 +122,11 @@ function(add_tests)
                 )
             endif()
 
-            # Apple tests need Objective-C++ support
+            # Apple tests need Objective-C++ support and Foundation framework
             set_target_properties(playback_tests_apple PROPERTIES
                 LINKER_LANGUAGE CXX
             )
+            target_link_libraries(playback_tests_apple PRIVATE "-framework Foundation")
         else()
             message(STATUS "No test files found in tests/apple/ directory")
         endif()
