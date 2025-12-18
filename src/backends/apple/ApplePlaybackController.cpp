@@ -49,10 +49,7 @@ bool ApplePlaybackController::pause() {
 }
 
 bool ApplePlaybackController::stop() {
-    // AVFoundation não tem stop nativo, fazemos pause + seek para início
-    player_->pause();
-    player_->seek(0);
-    return true;
+    return player_->stop();
 }
 
 bool ApplePlaybackController::seek(uint64_t positionMs) {

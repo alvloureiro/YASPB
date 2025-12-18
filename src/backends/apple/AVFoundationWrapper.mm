@@ -41,10 +41,12 @@ namespace playback::apple {
 // Implementação PIMPL em Objective-C++
 class AVFPlayerImpl {
 public:
-    AVFPlayerImpl() : internal_([[AVFPlayerInternal alloc] init]) {}
+    AVFPlayerImpl() : is_stopped(false), internal_([[AVFPlayerInternal alloc] init]) {}
     ~AVFPlayerImpl() { [internal_ cleanup]; }
 
     AVFPlayerInternal* internal() { return internal_; }
+
+    bool is_stopped;
 
 private:
     AVFPlayerInternal* __strong internal_;
@@ -57,6 +59,7 @@ AVFPlayerWrapper::~AVFPlayerWrapper() = default;
 
 bool AVFPlayerWrapper::load(const std::string& url) {
     @autoreleasepool {
+        impl_->is_stopped = false;
         std::cout << "[AVF] load() called with URL: " << url << std::endl;
 
         NSString* nsUrl = [NSString stringWithUTF8String:url.c_str()];
@@ -110,6 +113,7 @@ bool AVFPlayerWrapper::load(const std::string& url) {
 
 bool AVFPlayerWrapper::play() {
     @autoreleasepool {
+        impl_->is_stopped = false;
         if (!impl_->internal()->player) {
             std::cerr << "[AVF] ERROR: play() called but player is nil!" << std::endl;
             return false;
@@ -156,7 +160,8 @@ bool AVFPlayerWrapper::play() {
 
 bool AVFPlayerWrapper::pause() {
     @autoreleasepool {
-        if (!impl_->internal()->player) return false;
+        impl_->is_stopped = false;
+        if (!impl_->internal()->player) return true;
         [impl_->internal()->player pause];
         return true;
     }
@@ -164,7 +169,8 @@ bool AVFPlayerWrapper::pause() {
 
 bool AVFPlayerWrapper::stop() {
     @autoreleasepool {
-        if (!impl_->internal()->player) return false;
+        impl_->is_stopped = true;
+        if (!impl_->internal()->player) return true;
         [impl_->internal()->player pause];
         [impl_->internal()->player seekToTime:kCMTimeZero];
         return true;
@@ -246,6 +252,11 @@ PlaybackState AVFPlayerWrapper::getState() const {
         if (status == AVPlayerItemStatusFailed) {
             return PlaybackState::ERROR;
         }
+
+        if (impl_->is_stopped) {
+            return PlaybackState::STOPPED;
+        }
+
         if (status != AVPlayerItemStatusReadyToPlay) {
             return PlaybackState::BUFFERING;
         }
@@ -472,9 +483,7 @@ void AVFPlayerWrapper::setOutputView(void* view) {
 // This is needed for command-line apps on macOS
 extern "C" void processRunLoop(double seconds) {
     @autoreleasepool {
-        NSRunLoop* runLoop = [NSRunLoop currentRunLoop];
-        NSDate* limitDate = [NSDate dateWithTimeIntervalSinceNow:seconds];
-        [runLoop runMode:NSDefaultRunLoopMode beforeDate:limitDate];
+        [[NSRunLoop currentRunLoop] runUntilDate:[NSDate dateWithTimeIntervalSinceNow:seconds]];
     }
 }
 
