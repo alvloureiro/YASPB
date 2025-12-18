@@ -55,6 +55,10 @@ class AVFPlayerWrapper {
     uint64_t getCurrentPosition() const;
     uint64_t getDuration() const;
 
+    // Lifetime tracking for tests
+    // Returns a weak_ptr that expires when the internal implementation is destroyed
+    std::weak_ptr<void> getLifetimeTracker() const;
+
     MediaFormat getCurrentFormat() const;
     std::vector<MediaFormat> getAvailableFormats() const;
 

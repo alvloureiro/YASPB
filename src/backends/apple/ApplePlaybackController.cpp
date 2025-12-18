@@ -159,6 +159,13 @@ bool ApplePlaybackController::loadMedia(const std::string& filePathOrUrl) {
     return player_->load(filePathOrUrl);
 }
 
+std::weak_ptr<void> ApplePlaybackController::getLifetimeTracker() const {
+    if (player_) {
+        return player_->getLifetimeTracker();
+    }
+    return {};
+}
+
 // Private helper methods
 void ApplePlaybackController::notifyStateChanged(PlaybackState state) {
     PlaybackEvent event;

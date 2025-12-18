@@ -60,6 +60,9 @@ class ApplePlaybackController : public IPlaybackController {
     // This is useful when the media source doesn't expose the URI directly
     bool loadMedia(const std::string& filePathOrUrl);
 
+    // Testing helper
+    std::weak_ptr<void> getLifetimeTracker() const;
+
    private:
     // Private helper methods
     void notifyStateChanged(PlaybackState state);
