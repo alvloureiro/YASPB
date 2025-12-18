@@ -55,7 +55,8 @@ class ExampleEventListener : public IPlaybackEventListener {
 
             case PlaybackEvent::Type::POSITION_CHANGED:
                 if (event.durationMs > 0) {
-                    double progress = (double)event.positionMs / event.durationMs * 100.0;
+                    double progress =
+                        static_cast<double>(event.positionMs) / event.durationMs * 100.0;
                     std::cout << "\r[Progress] " << std::fixed << std::setprecision(1) << progress
                               << "% (" << formatTime(event.positionMs) << " / "
                               << formatTime(event.durationMs) << ")";
@@ -92,9 +93,9 @@ class ExampleEventListener : public IPlaybackEventListener {
     }
 
    private:
-    std::string formatTime(uint64_t ms) {
+    static std::string formatTime(uint64_t ms) {
         uint64_t seconds = ms / 1000;
-        uint64_t minutes = seconds / 60;
+        const uint64_t minutes = seconds / 60;
         seconds %= 60;
         return std::to_string(minutes) + ":" + (seconds < 10 ? "0" : "") + std::to_string(seconds);
     }
@@ -116,8 +117,7 @@ void printPlaybackInfo(std::unique_ptr<IPlaybackController>& controller) {
     std::cout << "Volume: " << controller->getVolume() << std::endl;
     std::cout << "Playback Rate: " << controller->getPlaybackRate() << "x" << std::endl;
 
-    auto formats = controller->getAvailableQualities();
-    if (!formats.empty()) {
+    if (const auto formats = controller->getAvailableQualities(); !formats.empty()) {
         std::cout << "Available Formats: " << formats.size() << std::endl;
         for (size_t i = 0; i < formats.size(); ++i) {
             const auto& format = formats[i];
@@ -306,7 +306,6 @@ int main(int argc, char* argv[]) {
         std::cout << "Or wait for playback to finish.\n" << std::endl;
 
         // Simple interactive loop
-        bool paused = false;
         while (controller->getState() != PlaybackState::ENDED &&
                controller->getState() != PlaybackState::ERROR) {
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
@@ -314,7 +313,7 @@ int main(int argc, char* argv[]) {
             // Check if user wants to pause/resume (non-blocking check)
             // In a real application, you'd use proper input handling
             auto state = controller->getState();
-            if (state == PlaybackState::PLAYING && !paused) {
+            if (bool paused = false; state == PlaybackState::PLAYING && !paused) {
                 // Continue playing
             } else if (state == PlaybackState::PAUSED && paused) {
                 // Continue paused
