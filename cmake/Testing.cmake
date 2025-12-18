@@ -4,7 +4,8 @@
 # This module handles the configuration and building of test executables using Google Test.
 # To add a new test:
 #   1. Create a test file in tests/mock/ directory (for mock backend tests)
-#   2. Use Google Test macros (TEST, TEST_F, etc.)
+#   2. Create a test file in tests/apple/ directory (for Apple backend tests, Apple platforms only)
+#   3. Use Google Test macros (TEST, TEST_F, etc.)
 #=============================================================================
 
 function(add_tests)
@@ -26,69 +27,106 @@ function(add_tests)
         FetchContent_MakeAvailable(googletest)
     endif()
 
-    # Collect all test source files from tests/mock/ directory
-    file(GLOB TEST_SOURCES "${CMAKE_SOURCE_DIR}/tests/mock/*.cpp")
+    # Helper function to create a test executable
+    function(add_test_executable target_name test_sources)
+        if(NOT test_sources)
+            return()
+        endif()
 
-    if(NOT TEST_SOURCES)
-        message(STATUS "No test files found in tests/mock/ directory")
-        return()
-    endif()
+        # Create test executable
+        add_executable(${target_name} ${test_sources})
 
-    # Create a single test executable with all test files
-    add_executable(playback_tests ${TEST_SOURCES})
-
-    # Link to core playback library
-    target_link_libraries(playback_tests
-        PRIVATE
-            playback
-    )
-
-    # Link to Google Test
-    if(TARGET GTest::gtest)
-        target_link_libraries(playback_tests PRIVATE GTest::gtest GTest::gtest_main)
-    elseif(TARGET gtest)
-        target_link_libraries(playback_tests PRIVATE gtest gtest_main)
-    else()
-        message(FATAL_ERROR "Google Test not found and could not be fetched")
-    endif()
-
-    # Link to mock_backend if enabled (needed for tests)
-    if(ENABLE_MOCK_BACKEND AND TARGET mock_backend)
-        target_link_libraries(playback_tests
+        # Add generators directory to include path for tests
+        target_include_directories(${target_name}
             PRIVATE
-                mock_backend
+                ${CMAKE_SOURCE_DIR}/tests/generators
         )
+
+        # Link to core playback library
+        target_link_libraries(${target_name}
+            PRIVATE
+                playback
+        )
+
+        # Link to Google Test
+        if(TARGET GTest::gtest)
+            target_link_libraries(${target_name} PRIVATE GTest::gtest GTest::gtest_main)
+        elseif(TARGET gtest)
+            target_link_libraries(${target_name} PRIVATE gtest gtest_main)
+        else()
+            message(FATAL_ERROR "Google Test not found and could not be fetched")
+        endif()
+
+        # Configure platform-specific flags
+        configure_platform_flags(${target_name})
+
+        # Set rpath for test executable to find libraries
+        if(PLATFORM_APPLE)
+            # On macOS, use @loader_path to find libraries relative to executable
+            # Set rpath to find libraries in the build directory
+            set_target_properties(${target_name} PROPERTIES
+                BUILD_WITH_INSTALL_RPATH OFF
+                INSTALL_RPATH "@loader_path/../lib"
+            )
+            # Add rpath for build directory
+            target_link_options(${target_name} PRIVATE
+                "LINKER:-rpath,${CMAKE_BINARY_DIR}/lib"
+            )
+        elseif(PLATFORM_LINUX)
+            set_target_properties(${target_name} PROPERTIES
+                BUILD_RPATH "${CMAKE_BINARY_DIR}/lib"
+                INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib"
+            )
+        endif()
+
+        # Add test to CTest
+        add_test(NAME ${target_name} COMMAND ${target_name})
+
+        message(STATUS "Added test executable: ${target_name}")
+    endfunction()
+
+    # Collect test source files from tests/mock/ directory
+    file(GLOB MOCK_TEST_SOURCES "${CMAKE_SOURCE_DIR}/tests/mock/*.cpp")
+
+    if(MOCK_TEST_SOURCES)
+        # Create mock backend tests executable
+        add_test_executable(playback_tests_mock "${MOCK_TEST_SOURCES}")
+
+        # Link to mock_backend if enabled (needed for tests)
+        if(ENABLE_MOCK_BACKEND AND TARGET mock_backend)
+            target_link_libraries(playback_tests_mock
+                PRIVATE
+                    mock_backend
+            )
+        endif()
+    else()
+        message(STATUS "No test files found in tests/mock/ directory")
     endif()
 
-    # Configure platform-specific flags
-    configure_platform_flags(playback_tests)
+    # Collect test source files from tests/apple/ directory (Apple platforms only)
+    if(PLATFORM_APPLE AND ENABLE_AVFOUNDATION_BACKEND)
+        file(GLOB APPLE_TEST_SOURCES "${CMAKE_SOURCE_DIR}/tests/apple/*.cpp")
 
-    # Set rpath for test executable to find libraries
-    if(PLATFORM_APPLE)
-        # On macOS, use @loader_path to find libraries relative to executable
-        # Set rpath to find libraries in the build directory
-        set_target_properties(playback_tests PROPERTIES
-            BUILD_WITH_INSTALL_RPATH OFF
-            INSTALL_RPATH "@loader_path/../lib"
-        )
-        # Add rpath for build directory
-        target_link_options(playback_tests PRIVATE
-            "LINKER:-rpath,${CMAKE_BINARY_DIR}/lib"
-        )
-    elseif(PLATFORM_LINUX)
-        set_target_properties(playback_tests PROPERTIES
-            BUILD_RPATH "${CMAKE_BINARY_DIR}/lib"
-            INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib"
-        )
+        if(APPLE_TEST_SOURCES)
+            # Create Apple backend tests executable
+            add_test_executable(playback_tests_apple "${APPLE_TEST_SOURCES}")
+
+            # Link to apple_backend if enabled (needed for tests)
+            if(TARGET apple_backend)
+                target_link_libraries(playback_tests_apple
+                    PRIVATE
+                        apple_backend
+                )
+            endif()
+
+            # Apple tests need Objective-C++ support
+            set_target_properties(playback_tests_apple PROPERTIES
+                LINKER_LANGUAGE CXX
+            )
+        else()
+            message(STATUS "No test files found in tests/apple/ directory")
+        endif()
     endif()
 
-    # Add test to CTest
-    add_test(NAME playback_tests COMMAND playback_tests)
-
-    # Enable test discovery (optional - can also run tests manually)
-    # Note: gtest_discover_tests may try to run during configure, so we add it manually
-    # Users can run: ctest or ./bin/playback_tests
-
-    message(STATUS "Added test executable: playback_tests")
-    message(STATUS "Run tests with: ctest or ./bin/playback_tests")
+    message(STATUS "Run tests with: ctest or ./bin/playback_tests_*")
 endfunction()
