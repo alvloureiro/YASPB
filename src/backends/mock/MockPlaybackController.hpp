@@ -6,11 +6,11 @@
 #include <string>
 #include <vector>
 
-#include "ThreadGuard.hpp"
 #include "playback/api/IPlaybackController.hpp"
 #include "playback/api/IPlaybackEventListener.hpp"
 #include "playback/api/MediaFormat.hpp"
 #include "playback/api/PlaybackConfig.hpp"
+#include "playback/core/ThreadGuard.hpp"
 
 namespace playback {
 

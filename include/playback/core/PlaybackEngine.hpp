@@ -29,12 +29,12 @@ class PlaybackEngine {
         std::shared_ptr<IMediaSource> source, const PlaybackConfig& config = PlaybackConfig());
 
     // Backend management
-    std::vector<std::string> getAvailableBackends() const;
-    std::shared_ptr<IPlaybackBackend> getBackend(const std::string& name) const;
+    [[nodiscard]] std::vector<std::string> getAvailableBackends() const;
+    [[nodiscard]] std::shared_ptr<IPlaybackBackend> getBackend(const std::string& name) const;
 
     // Global configuration
     void setDefaultConfig(const PlaybackConfig& config);
-    PlaybackConfig getDefaultConfig() const;
+    [[nodiscard]] PlaybackConfig getDefaultConfig() const;
 
    private:
     std::map<std::string, std::unique_ptr<IPlaybackBackend>> backends_;

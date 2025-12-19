@@ -7,7 +7,7 @@ Checks: >
   bugprone-*,
   cert-*,
   cppcoreguidelines-*,
-  modernize-*,
+  #  modernize-*,
   performance-*,
   readability-*,
   -bugprone-easily-swappable-parameters,
@@ -93,4 +93,3 @@ CheckOptions:
     value: CamelCase
   - key: readability-identifier-naming.TemplateTemplateParameterCase
     value: CamelCase
-

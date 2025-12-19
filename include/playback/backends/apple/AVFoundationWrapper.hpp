@@ -46,31 +46,31 @@ class AVFPlayerWrapper {
     bool seek(uint64_t positionMs);
 
     bool setVolume(double volume);
-    double getVolume() const;
+    [[nodiscard]] double getVolume() const;
 
     bool setPlaybackRate(double rate);
-    double getPlaybackRate() const;
+    [[nodiscard]] double getPlaybackRate() const;
 
-    PlaybackState getState() const;
-    uint64_t getCurrentPosition() const;
-    uint64_t getDuration() const;
+    [[nodiscard]] PlaybackState getState() const;
+    [[nodiscard]] uint64_t getCurrentPosition() const;
+    [[nodiscard]] uint64_t getDuration() const;
 
     // Lifetime tracking for tests
     // Returns a weak_ptr that expires when the internal implementation is destroyed
-    std::weak_ptr<void> getLifetimeTracker() const;
+    [[nodiscard]] std::weak_ptr<void> getLifetimeTracker() const;
 
-    MediaFormat getCurrentFormat() const;
-    std::vector<MediaFormat> getAvailableFormats() const;
+    [[nodiscard]] MediaFormat getCurrentFormat() const;
+    [[nodiscard]] std::vector<MediaFormat> getAvailableFormats() const;
 
     void setAudioSessionCategory(const std::string& category);
     void setAudioSessionMode(const std::string& mode);
 
     // HDR/Dolby Vision
-    bool supportsHDR() const;
-    bool supportsDolbyVision() const;
+    [[nodiscard]] bool supportsHDR() const;
+    [[nodiscard]] bool supportsDolbyVision() const;
 
     // DRM (FairPlay)
-    bool hasDRM() const;
+    [[nodiscard]] bool hasDRM() const;
     bool setDRMLicense(const std::string& license);
 
     // Callbacks
