@@ -16,7 +16,9 @@ class PlaybackFactory {
 #ifdef ENABLE_MOCK_BACKEND
     static std::unique_ptr<IPlaybackBackend> createMockBackend();
 #endif
+#ifdef ENABLE_FFMPEG_BACKEND
     static std::unique_ptr<IPlaybackBackend> createFFmpegBackend();
+#endif
     static std::unique_ptr<IPlaybackBackend> createGStreamerBackend();
 #ifdef ENABLE_AVFOUNDATION_BACKEND
     static std::unique_ptr<IPlaybackBackend> createAppleBackend();

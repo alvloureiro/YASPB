@@ -33,6 +33,9 @@ if(CMAKE_GENERATOR MATCHES "Unix Makefiles|Ninja|Xcode|Visual Studio" OR DEFINED
 else()
     option(BUILD_EXAMPLES "Build example executables" OFF)
 endif()
+# Options to control which examples to build (useful for selective builds)
+option(BUILD_APPLE_AUDIO_EXAMPLE "Build apple_audio_example" ON)
+option(BUILD_FFMPEG_AUDIO_EXAMPLE "Build ffmpeg_audio_example" ON)
 option(ENABLE_MOCK_BACKEND "Enable Mock backend (no dependencies, default)" ON)
 option(ENABLE_FFMPEG_BACKEND "Enable FFmpeg backend support" OFF)
 option(ENABLE_GSTREAMER_BACKEND "Enable GStreamer backend support" OFF)
@@ -119,6 +122,10 @@ configure_backends()
 # This is safe because backends don't link back to playback
 if(ENABLE_MOCK_BACKEND AND TARGET mock_backend)
     target_link_libraries(playback PRIVATE mock_backend)
+endif()
+
+if(ENABLE_FFMPEG_BACKEND AND TARGET ffmpeg_backend)
+    target_link_libraries(playback PRIVATE ffmpeg_backend)
 endif()
 
 if(ENABLE_AVFOUNDATION_BACKEND AND PLATFORM_APPLE AND TARGET apple_backend)

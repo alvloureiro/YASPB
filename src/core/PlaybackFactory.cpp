@@ -14,6 +14,11 @@ namespace playback {
 extern std::unique_ptr<IPlaybackBackend> createMockBackendFactory();
 #endif
 
+#ifdef ENABLE_FFMPEG_BACKEND
+// FFmpeg backend factory
+extern std::unique_ptr<IPlaybackBackend> createFFmpegBackendFactory();
+#endif
+
 #ifdef ENABLE_AVFOUNDATION_BACKEND
 // Apple backend factory (Apple platforms only)
 extern std::unique_ptr<IPlaybackBackend> createAppleBackendFactory();
@@ -27,6 +32,13 @@ std::unique_ptr<PlaybackEngine> PlaybackFactory::createEngine() {
     // Mock backend (no dependencies)
     if (auto mockBackend = createMockBackend()) {
         engine->registerBackend(std::move(mockBackend));
+    }
+#endif
+
+#ifdef ENABLE_FFMPEG_BACKEND
+    // FFmpeg backend
+    if (auto ffmpegBackend = createFFmpegBackend()) {
+        engine->registerBackend(std::move(ffmpegBackend));
     }
 #endif
 
@@ -48,11 +60,14 @@ std::unique_ptr<IPlaybackBackend> PlaybackFactory::createMockBackend() {
 }
 #endif
 
+#ifdef ENABLE_FFMPEG_BACKEND
+    #ifdef ENABLE_FFMPEG_BACKEND
 std::unique_ptr<IPlaybackBackend> PlaybackFactory::createFFmpegBackend() {
-    // TODO: Implement FFmpeg backend creation
-    // This will be implemented when FFmpeg backend is added
-    return nullptr;
+    // Use factory function from FFmpegBackend
+    return createFFmpegBackendFactory();
 }
+    #endif
+#endif
 
 std::unique_ptr<IPlaybackBackend> PlaybackFactory::createGStreamerBackend() {
     // TODO: Implement GStreamer backend creation

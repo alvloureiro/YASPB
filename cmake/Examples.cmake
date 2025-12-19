@@ -20,6 +20,17 @@ function(add_examples)
     foreach(EXAMPLE_SOURCE ${EXAMPLE_SOURCES})
         get_filename_component(EXAMPLE_NAME ${EXAMPLE_SOURCE} NAME_WE)
 
+        # Skip examples based on build options
+        if(EXAMPLE_NAME STREQUAL "apple_audio_example" AND NOT BUILD_APPLE_AUDIO_EXAMPLE)
+            message(STATUS "Skipping ${EXAMPLE_NAME} (BUILD_APPLE_AUDIO_EXAMPLE is OFF)")
+            continue()
+        endif()
+
+        if(EXAMPLE_NAME STREQUAL "ffmpeg_audio_example" AND NOT BUILD_FFMPEG_AUDIO_EXAMPLE)
+            message(STATUS "Skipping ${EXAMPLE_NAME} (BUILD_FFMPEG_AUDIO_EXAMPLE is OFF)")
+            continue()
+        endif()
+
         add_example_executable(
             NAME ${EXAMPLE_NAME}
             SOURCE ${EXAMPLE_SOURCE}
@@ -72,6 +83,15 @@ function(add_example_executable)
                 apple_backend
         )
         message(STATUS "  Linked ${EXAMPLE_NAME} to apple_backend")
+    endif()
+
+    # ffmpeg_audio_example needs ffmpeg_backend
+    if(EXAMPLE_NAME STREQUAL "ffmpeg_audio_example" AND TARGET ffmpeg_backend)
+        target_link_libraries(${EXAMPLE_NAME}
+            PRIVATE
+                ffmpeg_backend
+        )
+        message(STATUS "  Linked ${EXAMPLE_NAME} to ffmpeg_backend")
     endif()
 
     # Add additional libraries if provided

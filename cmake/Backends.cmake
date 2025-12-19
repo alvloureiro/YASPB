@@ -23,14 +23,30 @@ function(configure_backends)
 
     # FFmpeg Backend
     if(ENABLE_FFMPEG_BACKEND)
+        # Add cmake modules directory to find FindFFmpeg.cmake
+        list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
         find_package(FFmpeg REQUIRED)
 
         add_backend(
             NAME ffmpeg
-            SOURCE src/backends/FFmpegBackend.cpp
+            SOURCE
+                src/backends/ffmpeg/FFmpegBackend.cpp
+                src/backends/ffmpeg/FFmpegMediaSource.cpp
+                src/backends/ffmpeg/FFmpegPlaybackController.cpp
             LINK_LIBRARIES ${FFMPEG_LIBRARIES}
             INCLUDE_DIRS ${FFMPEG_INCLUDE_DIRS}
         )
+
+        # Link CoreAudio frameworks on macOS for audio output
+        if(PLATFORM_APPLE AND TARGET ffmpeg_backend)
+            target_link_libraries(ffmpeg_backend
+                PRIVATE
+                    "-framework AudioToolbox"
+                    "-framework CoreAudio"
+            )
+        endif()
+
+        message(STATUS "FFmpeg backend enabled")
     endif()
 
     # GStreamer Backend
@@ -56,7 +72,7 @@ function(configure_backends)
     if(ENABLE_MOCK_BACKEND)
         set(ANY_BACKEND_ENABLED TRUE)
     endif()
-    if(ENABLE_FFMPEG_BACKEND)
+    if(ENABLE_FFMPEG_BACKEND AND FFMPEG_FOUND)
         set(ANY_BACKEND_ENABLED TRUE)
     endif()
     if(ENABLE_GSTREAMER_BACKEND)
@@ -111,27 +127,19 @@ function(add_backend)
         endif()
     endforeach()
 
-    # Link to core playback library (except for mock and apple which don't need linking)
-    # These backends only need headers, not the library itself
+    # Backends only need headers, not the library itself
     # This avoids circular dependencies since playback links to these backends
-    if(NOT BACKEND_NAME STREQUAL "mock" AND NOT BACKEND_NAME STREQUAL "apple")
-        target_link_libraries(${BACKEND_NAME}_backend
-            PUBLIC
-                playback
-        )
-    else()
-        # Mock and Apple backends only need include directories
+    # All backends should only use include directories, not link to playback
+    target_include_directories(${BACKEND_NAME}_backend
+        PUBLIC
+            $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>
+    )
+    # Add backend-specific include directory for internal headers
+    if(BACKEND_NAME STREQUAL "mock")
         target_include_directories(${BACKEND_NAME}_backend
-            PUBLIC
-                $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>
+            PRIVATE
+                $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/src/backends/mock>
         )
-        # Add backend-specific include directory for internal headers
-        if(BACKEND_NAME STREQUAL "mock")
-            target_include_directories(${BACKEND_NAME}_backend
-                PRIVATE
-                    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/src/backends/mock>
-            )
-        endif()
     endif()
 
     # Add external libraries if provided
