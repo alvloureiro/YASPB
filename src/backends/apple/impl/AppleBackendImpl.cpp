@@ -6,7 +6,7 @@
 #include "playback/api/IPlaybackController.hpp"
 #include "playback/api/MediaFormat.hpp"
 #include "playback/api/PlaybackConfig.hpp"
-#include "playback/backends/AppleBackend.hpp"
+#include "playback/backends/apple/AppleBackend.hpp"
 #include "playback/backends/apple/ApplePlaybackController.hpp"
 
 #ifdef __APPLE__

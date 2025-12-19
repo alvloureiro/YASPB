@@ -2,8 +2,8 @@
 
 #include <memory>
 
-#include "IPlaybackBackend.hpp"
-#include "apple/AVFoundationWrapper.hpp"
+#include "../IPlaybackBackend.hpp"
+#include "AVFoundationWrapper.hpp"
 
 namespace playback {
 
@@ -36,3 +36,4 @@ class AppleBackend : public IPlaybackBackend {
 };
 
 }  // namespace playback
+
