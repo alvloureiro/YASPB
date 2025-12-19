@@ -1,7 +1,9 @@
+#include <atomic>
 #include <chrono>
 #include <iomanip>
 #include <iostream>
 #include <memory>
+#include <mutex>
 #include <string>
 #include <thread>
 
@@ -55,7 +57,7 @@ class ExampleEventListener : public IPlaybackEventListener {
 
             case PlaybackEvent::Type::POSITION_CHANGED:
                 if (event.durationMs > 0) {
-                    double progress =
+                    const double progress =
                         static_cast<double>(event.positionMs) / event.durationMs * 100.0;
                     std::cout << "\r[Progress] " << std::fixed << std::setprecision(1) << progress
                               << "% (" << formatTime(event.positionMs) << " / "
@@ -277,59 +279,122 @@ int main(int argc, char* argv[]) {
         // Print playback information
         printPlaybackInfo(controller);
 
-        // Start playback
-        std::cout << "Starting playback..." << std::endl;
-        if (!controller->play()) {
-            std::cerr << "Failed to start playback" << std::endl;
-            std::cerr << "Current state: " << static_cast<int>(controller->getState()) << std::endl;
-            return 1;
-        }
-
-        // Wait for playback to actually start
-        std::this_thread::sleep_for(std::chrono::milliseconds(500));
-
-        // Verify playback started
-        auto playState = controller->getState();
-        std::cout << "Playback state after play(): " << static_cast<int>(playState) << std::endl;
-        if (playState != PlaybackState::PLAYING) {
-            std::cerr << "WARNING: Playback did not start. State is: "
-                      << static_cast<int>(playState) << std::endl;
-            std::cerr << "Duration: " << controller->getDuration() << " ms" << std::endl;
-            std::cerr << "Position: " << controller->getCurrentPosition() << " ms" << std::endl;
-        } else {
-            std::cout << "Playback started successfully!" << std::endl;
-        }
-
-        // Monitor playback
-        std::cout << "\nPlayback started. Press Enter to pause, then Enter again to resume..."
+        std::cout << "Media is ready. Use keyboard controls to play, pause, stop, or seek."
                   << std::endl;
-        std::cout << "Or wait for playback to finish.\n" << std::endl;
 
-        // Simple interactive loop
-        while (controller->getState() != PlaybackState::ENDED &&
-               controller->getState() != PlaybackState::ERROR) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        // Keyboard input handling
+        std::atomic running{true};
+        std::atomic command{'\0'};
+        std::mutex inputMutex;
 
-            // Check if user wants to pause/resume (non-blocking check)
-            // In a real application, you'd use proper input handling
-            auto state = controller->getState();
-            if (bool paused = false; state == PlaybackState::PLAYING && !paused) {
-                // Continue playing
-            } else if (state == PlaybackState::PAUSED && paused) {
-                // Continue paused
+        // Print controls
+        std::cout << "\n=== Keyboard Controls ===" << std::endl;
+        std::cout << "  p - Play" << std::endl;
+        std::cout << "  s - Stop" << std::endl;
+        std::cout << "  d - Pause" << std::endl;
+        std::cout << "  w - Seek forward 10 seconds" << std::endl;
+        std::cout << "  q - Quit" << std::endl;
+        std::cout << "========================\n" << std::endl;
+
+        // Keyboard input thread
+        std::thread inputThread([&running, &command, &inputMutex]() {
+            while (running.load()) {
+                char c;
+                // This will block until input is available
+                if (std::cin >> c) {
+                    if (c == 'q') {
+                        running = false;
+                        break;
+                    }
+                    std::lock_guard<std::mutex> lock(inputMutex);
+                    command.store(c);
+                } else {
+                    // EOF or error, exit
+                    running = false;
+                    break;
+                }
             }
+        });
+
+        // Main playback monitoring loop
+        while (running && controller->getState() != PlaybackState::ENDED &&
+               controller->getState() != PlaybackState::ERROR) {
+            // Process keyboard commands
+            char cmd = '\0';
+            {
+                std::lock_guard<std::mutex> lock(inputMutex);
+                cmd = command.exchange('\0');
+            }
+
+            switch (cmd) {
+                case 'p':  // Play
+                    if (controller->play()) {
+                        std::cout << "\n[Command] Playing..." << std::endl;
+                    } else {
+                        std::cout << "\n[Command] Failed to play" << std::endl;
+                    }
+                    break;
+
+                case 's':  // Stop
+                    if (controller->stop()) {
+                        std::cout << "\n[Command] Stopped" << std::endl;
+                    } else {
+                        std::cout << "\n[Command] Failed to stop" << std::endl;
+                    }
+                    break;
+
+                case 'd':  // Pause
+                    if (controller->pause()) {
+                        std::cout << "\n[Command] Paused" << std::endl;
+                    } else {
+                        std::cout << "\n[Command] Failed to pause" << std::endl;
+                    }
+                    break;
+
+                case 'w':  // Seek forward 10 seconds
+                {
+                    uint64_t currentPos = controller->getCurrentPosition();
+                    uint64_t duration = controller->getDuration();
+                    uint64_t seekPos = currentPos + 10000;  // +10 seconds
+                    if (seekPos > duration) {
+                        seekPos = duration;
+                    }
+                    if (controller->seek(seekPos)) {
+                        std::cout << "\n[Command] Seeking to " << (seekPos / 1000) << "s"
+                                  << std::endl;
+                    } else {
+                        std::cout << "\n[Command] Failed to seek" << std::endl;
+                    }
+                } break;
+
+                default:
+                    break;
+            }
+
+    // Process run loop for AVFoundation (critical on macOS)
+    #ifdef __APPLE__
+            processRunLoop(0.1);
+    #else
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    #endif
 
             // Print stats periodically
             static auto lastStatsTime = std::chrono::steady_clock::now();
-            auto now = std::chrono::steady_clock::now();
-            if (std::chrono::duration_cast<std::chrono::seconds>(now - lastStatsTime).count() >=
-                5) {
+            if (auto now = std::chrono::steady_clock::now();
+                std::chrono::duration_cast<std::chrono::seconds>(now - lastStatsTime).count() >=
+                15) {
                 auto stats = controller->getStats();
                 std::cout << "\n[Stats] Buffer Health: " << std::fixed << std::setprecision(2)
                           << stats.bufferHealth * 100.0 << "%, "
                           << "FPS: " << stats.framesPerSecond << std::endl;
                 lastStatsTime = now;
             }
+        }
+
+        // Stop input thread
+        running = false;
+        if (inputThread.joinable()) {
+            inputThread.join();
         }
 
         std::cout << "\n\nPlayback finished." << std::endl;
