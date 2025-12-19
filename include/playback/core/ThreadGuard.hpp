@@ -79,4 +79,3 @@ class ThreadGuard {
 };
 
 }  // namespace playback
-
