@@ -199,6 +199,46 @@ The diagram shows:
 - Enums and their values
 - Component dependencies and interactions
 
+## Build Configurations
+
+For detailed information on how to configure builds for specific scenarios, see [docs/BUILD_CONFIGURATIONS.md](docs/BUILD_CONFIGURATIONS.md).
+
+### Default Behavior
+
+**When you run `cmake ..` with no options:**
+- ✅ Mock backend: **ENABLED**
+- ✅ Tests: **ENABLED** (Mock backend tests)
+- ✅ Coverage: **ENABLED**
+- ❌ Examples: **DISABLED**
+
+### Quick Examples
+
+**Build only FFmpeg backend:**
+```bash
+cmake .. -DENABLE_FFMPEG_BACKEND=ON
+```
+*(Mock backend is auto-disabled, tests/coverage are OFF by default)*
+
+**Build FFmpeg backend + tests:**
+```bash
+cmake .. -DENABLE_FFMPEG_BACKEND=ON -DBUILD_TESTS=ON
+```
+
+**Build FFmpeg backend + tests + coverage:**
+```bash
+cmake .. -DENABLE_FFMPEG_BACKEND=ON -DBUILD_TESTS=ON -DENABLE_COVERAGE=ON
+```
+
+**Build FFmpeg backend + example:**
+```bash
+cmake .. -DENABLE_FFMPEG_BACKEND=ON -DBUILD_FFMPEG_AUDIO_EXAMPLE=ON
+```
+*(BUILD_EXAMPLES is automatically enabled when you enable a specific example)*
+
+**Note**:
+- When you enable a non-Mock backend, Mock is automatically disabled and tests/coverage/examples default to OFF (must be explicitly enabled).
+- When you enable a specific example (e.g., `BUILD_FFMPEG_AUDIO_EXAMPLE=ON`), `BUILD_EXAMPLES` is automatically enabled.
+
 ## Testing
 
 The project uses Google Test (GTest) for unit testing. Tests are automatically discovered and can be run with CTest.
@@ -256,6 +296,79 @@ Tests are organized by component:
 - `test_core_playbackfactory.cpp` - Tests for PlaybackFactory
 
 All tests use the Mock backend for testing, which requires no external dependencies.
+
+### Code Coverage
+
+The project supports code coverage analysis using `gcov` and `lcov` to track how much of the codebase is covered by tests. Coverage reports can be generated for each backend implementation separately.
+
+#### Prerequisites for Coverage
+
+**macOS:**
+```bash
+brew install lcov
+# gcov is typically included with Xcode Command Line Tools
+```
+
+**Linux (Ubuntu/Debian):**
+```bash
+sudo apt-get install lcov gcov
+```
+
+#### Generating Coverage Reports
+
+```bash
+# Build with coverage enabled
+mkdir build && cd build
+cmake .. -DENABLE_COVERAGE=ON -DCMAKE_BUILD_TYPE=Debug
+cmake --build .
+
+# Run tests to generate coverage data
+ctest
+
+# Generate coverage report
+cmake --build . --target coverage
+
+# Generate HTML coverage report
+cmake --build . --target coverage-html
+
+# View the report
+open coverage/html/index.html  # macOS
+# or
+xdg-open coverage/html/index.html  # Linux
+```
+
+#### Per-Backend Coverage Reports
+
+You can generate coverage reports for individual backends:
+
+```bash
+# Coverage for Mock backend
+cmake --build . --target coverage-mock
+
+# Coverage for FFmpeg backend (if enabled)
+cmake --build . --target coverage-ffmpeg
+
+# Coverage for Apple backend (if enabled, macOS only)
+cmake --build . --target coverage-apple
+```
+
+Each backend report will be available in:
+- `coverage/backend-<name>/html/index.html` - HTML report
+- `coverage/backend-<name>/coverage_filtered.info` - Coverage data file
+
+#### Coverage Targets
+
+- `coverage` - Generate combined coverage data for all backends
+- `coverage-html` - Generate HTML coverage report (requires genhtml)
+- `coverage-summary` - Print coverage summary to console
+- `coverage-clean` - Remove all coverage files
+- `coverage-<backend>` - Generate coverage for specific backend (e.g., `coverage-mock`, `coverage-ffmpeg`)
+
+#### Coverage Report Locations
+
+- Combined report: `coverage/html/index.html`
+- Per-backend reports: `coverage/backend-<name>/html/index.html`
+- Coverage data files: `coverage/*.info`
 
 ## IDE Setup
 

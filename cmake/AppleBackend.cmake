@@ -6,7 +6,7 @@
 #=============================================================================
 
 function(configure_apple_backend)
-    if(NOT ENABLE_AVFOUNDATION_BACKEND OR NOT PLATFORM_APPLE)
+    if(NOT ENABLE_APPLE_BACKEND OR NOT PLATFORM_APPLE)
         return()
     endif()
 

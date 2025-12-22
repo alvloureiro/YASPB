@@ -5,7 +5,8 @@
 # To add a new test:
 #   1. Create a test file in tests/mock/ directory (for mock backend tests)
 #   2. Create a test file in tests/apple/ directory (for Apple backend tests, Apple platforms only)
-#   3. Use Google Test macros (TEST, TEST_F, etc.)
+#   3. Create a test file in tests/ffmpeg/ directory (for FFmpeg backend tests)
+#   4. Use Google Test macros (TEST, TEST_F, etc.)
 #=============================================================================
 
 function(add_tests)
@@ -82,29 +83,38 @@ function(add_tests)
         # Add test to CTest
         add_test(NAME ${target_name} COMMAND ${target_name})
 
+        # Enable coverage if requested
+        if(ENABLE_COVERAGE)
+            enable_coverage_for_target(${target_name})
+        endif()
+
         message(STATUS "Added test executable: ${target_name}")
     endfunction()
 
-    # Collect test source files from tests/mock/ directory
-    file(GLOB MOCK_TEST_SOURCES "${CMAKE_SOURCE_DIR}/tests/mock/*.cpp")
+    # Collect test source files from tests/mock/ directory (only if Mock backend is enabled)
+    if(ENABLE_MOCK_BACKEND)
+        file(GLOB MOCK_TEST_SOURCES "${CMAKE_SOURCE_DIR}/tests/mock/*.cpp")
 
-    if(MOCK_TEST_SOURCES)
-        # Create mock backend tests executable
-        add_test_executable(playback_tests_mock "${MOCK_TEST_SOURCES}")
+        if(MOCK_TEST_SOURCES)
+            # Create mock backend tests executable
+            add_test_executable(playback_tests_mock "${MOCK_TEST_SOURCES}")
 
-        # Link to mock_backend if enabled (needed for tests)
-        if(ENABLE_MOCK_BACKEND AND TARGET mock_backend)
-            target_link_libraries(playback_tests_mock
-                PRIVATE
-                    mock_backend
-            )
+            # Link to mock_backend if enabled (needed for tests)
+            if(TARGET mock_backend)
+                target_link_libraries(playback_tests_mock
+                    PRIVATE
+                        mock_backend
+                )
+            endif()
+        else()
+            message(STATUS "No test files found in tests/mock/ directory")
         endif()
     else()
-        message(STATUS "No test files found in tests/mock/ directory")
+        message(STATUS "Mock backend tests skipped (ENABLE_MOCK_BACKEND is OFF)")
     endif()
 
     # Collect test source files from tests/apple/ directory (Apple platforms only)
-    if(PLATFORM_APPLE AND ENABLE_AVFOUNDATION_BACKEND)
+    if(PLATFORM_APPLE AND ENABLE_APPLE_BACKEND)
         file(GLOB APPLE_TEST_SOURCES
             "${CMAKE_SOURCE_DIR}/tests/apple/*.cpp"
             "${CMAKE_SOURCE_DIR}/tests/apple/*.mm"
@@ -130,7 +140,80 @@ function(add_tests)
         else()
             message(STATUS "No test files found in tests/apple/ directory")
         endif()
+    else()
+        if(PLATFORM_APPLE)
+            message(STATUS "Apple backend tests skipped (ENABLE_APPLE_BACKEND is OFF)")
+        else()
+            message(STATUS "Apple backend tests skipped (not on Apple platform)")
+        endif()
     endif()
 
+    # Collect test source files from tests/ffmpeg/ directory (only if FFmpeg backend is enabled)
+    if(ENABLE_FFMPEG_BACKEND)
+        file(GLOB FFMPEG_TEST_SOURCES "${CMAKE_SOURCE_DIR}/tests/ffmpeg/*.cpp")
+
+        if(FFMPEG_TEST_SOURCES)
+            # Create FFmpeg backend tests executable
+            add_test_executable(playback_tests_ffmpeg "${FFMPEG_TEST_SOURCES}")
+
+            # Add compile definition for FFmpeg backend
+            target_compile_definitions(playback_tests_ffmpeg PRIVATE ENABLE_FFMPEG_BACKEND)
+
+            # Link to ffmpeg_backend if enabled (needed for tests)
+            if(TARGET ffmpeg_backend)
+                target_link_libraries(playback_tests_ffmpeg
+                    PRIVATE
+                        ffmpeg_backend
+                )
+            endif()
+
+            # Link FFmpeg libraries if available
+            if(FFMPEG_LIBRARIES)
+                target_link_libraries(playback_tests_ffmpeg
+                    PRIVATE
+                        ${FFMPEG_LIBRARIES}
+                )
+            endif()
+
+            # Add FFmpeg include directories if available
+            if(FFMPEG_INCLUDE_DIRS)
+                target_include_directories(playback_tests_ffmpeg
+                    PRIVATE
+                        ${FFMPEG_INCLUDE_DIRS}
+                )
+            endif()
+
+            # Link CoreAudio frameworks on macOS for audio output
+            if(PLATFORM_APPLE AND TARGET playback_tests_ffmpeg)
+                target_link_libraries(playback_tests_ffmpeg
+                    PRIVATE
+                        "-framework AudioToolbox"
+                        "-framework CoreAudio"
+                )
+            endif()
+        else()
+            message(STATUS "No test files found in tests/ffmpeg/ directory")
+        endif()
+    else()
+        message(STATUS "FFmpeg backend tests skipped (ENABLE_FFMPEG_BACKEND is OFF)")
+    endif()
+
+    # Print summary of what will be built
+    message(STATUS "")
+    message(STATUS "=== Test Configuration Summary ===")
+    if(TARGET playback_tests_mock)
+        message(STATUS "  ✓ Mock backend tests: playback_tests_mock")
+    endif()
+    if(TARGET playback_tests_ffmpeg)
+        message(STATUS "  ✓ FFmpeg backend tests: playback_tests_ffmpeg")
+    endif()
+    if(TARGET playback_tests_apple)
+        message(STATUS "  ✓ Apple backend tests: playback_tests_apple")
+    endif()
+    if(NOT TARGET playback_tests_mock AND NOT TARGET playback_tests_ffmpeg AND NOT TARGET playback_tests_apple)
+        message(STATUS "  ⚠ No test executables will be built")
+        message(STATUS "     Enable at least one backend (ENABLE_MOCK_BACKEND, ENABLE_FFMPEG_BACKEND, etc.)")
+    endif()
+    message(STATUS "")
     message(STATUS "Run tests with: ctest or ./bin/playback_tests_*")
 endfunction()

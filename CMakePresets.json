@@ -16,7 +16,7 @@
         "CMAKE_BUILD_TYPE": "Debug",
         "BUILD_EXAMPLES": "OFF",
         "BUILD_TESTS": "ON",
-        "ENABLE_AVFOUNDATION_BACKEND": "OFF",
+        "ENABLE_APPLE_BACKEND": "OFF",
         "ENABLE_MOCK_BACKEND": "ON"
       }
     },
@@ -30,7 +30,7 @@
         "CMAKE_BUILD_TYPE": "Debug",
         "BUILD_EXAMPLES": "ON",
         "BUILD_TESTS": "ON",
-        "ENABLE_AVFOUNDATION_BACKEND": "ON",
+        "ENABLE_APPLE_BACKEND": "ON",
         "ENABLE_MOCK_BACKEND": "OFF"
       }
     },
@@ -44,7 +44,7 @@
         "CMAKE_BUILD_TYPE": "Release",
         "BUILD_EXAMPLES": "ON",
         "BUILD_TESTS": "OFF",
-        "ENABLE_AVFOUNDATION_BACKEND": "ON",
+        "ENABLE_APPLE_BACKEND": "ON",
         "ENABLE_MOCK_BACKEND": "ON"
       }
     },
@@ -58,7 +58,7 @@
         "CMAKE_BUILD_TYPE": "Debug",
         "BUILD_EXAMPLES": "OFF",
         "BUILD_TESTS": "ON",
-        "ENABLE_AVFOUNDATION_BACKEND": "ON",
+        "ENABLE_APPLE_BACKEND": "ON",
         "ENABLE_MOCK_BACKEND": "ON",
         "ENABLE_FFMPEG_BACKEND": "OFF"
       }
@@ -75,7 +75,7 @@
         "BUILD_TESTS": "OFF",
         "BUILD_APPLE_AUDIO_EXAMPLE": "ON",
         "BUILD_FFMPEG_AUDIO_EXAMPLE": "OFF",
-        "ENABLE_AVFOUNDATION_BACKEND": "ON",
+        "ENABLE_APPLE_BACKEND": "ON",
         "ENABLE_MOCK_BACKEND": "OFF",
         "ENABLE_FFMPEG_BACKEND": "OFF"
       }
@@ -90,7 +90,7 @@
         "CMAKE_BUILD_TYPE": "Debug",
         "BUILD_EXAMPLES": "OFF",
         "BUILD_TESTS": "ON",
-        "ENABLE_AVFOUNDATION_BACKEND": "OFF",
+        "ENABLE_APPLE_BACKEND": "OFF",
         "ENABLE_MOCK_BACKEND": "ON",
         "ENABLE_FFMPEG_BACKEND": "OFF"
       }
@@ -107,7 +107,7 @@
         "BUILD_TESTS": "OFF",
         "BUILD_APPLE_AUDIO_EXAMPLE": "OFF",
         "BUILD_FFMPEG_AUDIO_EXAMPLE": "ON",
-        "ENABLE_AVFOUNDATION_BACKEND": "OFF",
+        "ENABLE_APPLE_BACKEND": "OFF",
         "ENABLE_MOCK_BACKEND": "OFF",
         "ENABLE_FFMPEG_BACKEND": "ON"
       }

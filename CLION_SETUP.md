@@ -40,7 +40,7 @@ CLion will automatically detect the `CMakeLists.txt` file. The project includes 
    - **Name**: Debug
    - **Build type**: Debug
    - **Generator**: Ninja (recommended) or Unix Makefiles
-   - **CMake options**: `-DBUILD_EXAMPLES=ON -DENABLE_AVFOUNDATION_BACKEND=ON`
+   - **CMake options**: `-DBUILD_EXAMPLES=ON -DENABLE_APPLE_BACKEND=ON`
    - **Build directory**: `cmake-build-debug`
 
 ### 3. Reload CMake Project
@@ -92,7 +92,7 @@ If `apple_audio_example` doesn't appear:
 ### Build Errors
 
 If you get build errors:
-1. Check that `ENABLE_AVFOUNDATION_BACKEND=ON` is set
+1. Check that `ENABLE_APPLE_BACKEND=ON` is set
 2. Make sure you're on macOS (Apple backend only works on Apple platforms)
 3. Check the CMake output for detailed error messages
 

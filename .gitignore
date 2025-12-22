@@ -44,6 +44,14 @@ compile_commands.json
 Testing/
 test_results.xml
 
+# Coverage files
+coverage/
+*.gcda
+*.gcno
+*.gcov
+*.info
+*.html
+
 # Output directories
 bin/
 lib/

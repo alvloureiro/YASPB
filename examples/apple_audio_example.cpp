@@ -167,9 +167,8 @@ int main(int argc, char* argv[]) {
         // Get Apple backend
         auto appleBackend = engine->getBackend("Apple AVFoundation");
         if (!appleBackend) {
-            std::cerr
-                << "Apple backend not available. Make sure ENABLE_AVFOUNDATION_BACKEND is enabled."
-                << std::endl;
+            std::cerr << "Apple backend not available. Make sure ENABLE_APPLE_BACKEND is enabled."
+                      << std::endl;
             return 1;
         }
 

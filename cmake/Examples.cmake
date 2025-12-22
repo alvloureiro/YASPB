@@ -5,7 +5,22 @@
 # To add a new example:
 #   1. Create an example file in examples/ directory
 #   2. Call add_example_executable() function below
+#
+# Note: If a specific example is enabled (e.g., BUILD_FFMPEG_AUDIO_EXAMPLE=ON),
+# BUILD_EXAMPLES will be automatically enabled.
 #=============================================================================
+
+# Function to check and auto-enable BUILD_EXAMPLES if needed
+# This is called early (before add_examples) to set BUILD_EXAMPLES
+function(check_and_enable_examples)
+    # Auto-enable BUILD_EXAMPLES if any specific example is enabled
+    if(BUILD_APPLE_AUDIO_EXAMPLE OR BUILD_FFMPEG_AUDIO_EXAMPLE)
+        if(NOT BUILD_EXAMPLES)
+            message(STATUS "Auto-enabling BUILD_EXAMPLES (specific example is enabled)")
+            set(BUILD_EXAMPLES ON CACHE BOOL "Build example executables" FORCE)
+        endif()
+    endif()
+endfunction()
 
 function(add_examples)
     # Collect all example source files
@@ -20,15 +35,27 @@ function(add_examples)
     foreach(EXAMPLE_SOURCE ${EXAMPLE_SOURCES})
         get_filename_component(EXAMPLE_NAME ${EXAMPLE_SOURCE} NAME_WE)
 
-        # Skip examples based on build options
-        if(EXAMPLE_NAME STREQUAL "apple_audio_example" AND NOT BUILD_APPLE_AUDIO_EXAMPLE)
-            message(STATUS "Skipping ${EXAMPLE_NAME} (BUILD_APPLE_AUDIO_EXAMPLE is OFF)")
-            continue()
+        # Skip examples based on build options and backend availability
+        if(EXAMPLE_NAME STREQUAL "apple_audio_example")
+            if(NOT BUILD_APPLE_AUDIO_EXAMPLE)
+                message(STATUS "Skipping ${EXAMPLE_NAME} (BUILD_APPLE_AUDIO_EXAMPLE is OFF)")
+                continue()
+            endif()
+            if(NOT ENABLE_APPLE_BACKEND OR NOT PLATFORM_APPLE)
+                message(STATUS "Skipping ${EXAMPLE_NAME} (Apple backend not enabled)")
+                continue()
+            endif()
         endif()
 
-        if(EXAMPLE_NAME STREQUAL "ffmpeg_audio_example" AND NOT BUILD_FFMPEG_AUDIO_EXAMPLE)
-            message(STATUS "Skipping ${EXAMPLE_NAME} (BUILD_FFMPEG_AUDIO_EXAMPLE is OFF)")
-            continue()
+        if(EXAMPLE_NAME STREQUAL "ffmpeg_audio_example")
+            if(NOT BUILD_FFMPEG_AUDIO_EXAMPLE)
+                message(STATUS "Skipping ${EXAMPLE_NAME} (BUILD_FFMPEG_AUDIO_EXAMPLE is OFF)")
+                continue()
+            endif()
+            if(NOT ENABLE_FFMPEG_BACKEND)
+                message(STATUS "Skipping ${EXAMPLE_NAME} (FFmpeg backend not enabled)")
+                continue()
+            endif()
         endif()
 
         add_example_executable(

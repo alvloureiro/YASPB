@@ -62,6 +62,7 @@ function(configure_backends)
         )
     endif()
 
+
     # Apple Backend (Apple platforms only)
     # Configured in separate module for better organization
     include(cmake/AppleBackend.cmake)
@@ -78,7 +79,7 @@ function(configure_backends)
     if(ENABLE_GSTREAMER_BACKEND)
         set(ANY_BACKEND_ENABLED TRUE)
     endif()
-    if(ENABLE_AVFOUNDATION_BACKEND AND PLATFORM_APPLE)
+    if(ENABLE_APPLE_BACKEND AND PLATFORM_APPLE)
         set(ANY_BACKEND_ENABLED TRUE)
     endif()
 
@@ -168,6 +169,10 @@ function(add_backend)
         SOVERSION ${PROJECT_VERSION_MAJOR}
     )
 
+    # Enable coverage if requested
+    if (ENABLE_COVERAGE)
+        enable_coverage_for_target(${BACKEND_NAME}_backend)
+    endif ()
+
     message(STATUS "Configured backend: ${BACKEND_NAME}")
 endfunction()
-
