@@ -19,11 +19,12 @@ function(add_tests)
         message(STATUS "If this fails, install GTest: brew install googletest (macOS) or apt-get install libgtest-dev (Linux)")
 
         # Google Test via FetchContent
+        # Using v1.14.2 which requires CMake 3.14+ and fixes deprecation warnings
         include(FetchContent)
         FetchContent_Declare(
             googletest
             GIT_REPOSITORY https://github.com/google/googletest.git
-            GIT_TAG release-1.12.1
+                GIT_TAG v1.17.0
         )
         FetchContent_MakeAvailable(googletest)
     endif()
