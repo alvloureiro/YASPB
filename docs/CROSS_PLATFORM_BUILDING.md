@@ -11,27 +11,41 @@ This guide explains how to build StreamingPlayback for different platforms, incl
 
 ## Native Building
 
-### macOS
+### macOS / Linux
+
+**Using the build script (recommended):**
+
+```bash
+# Build with default settings (Debug build)
+./scripts/build-native.sh
+
+# Build with custom settings
+CMAKE_BUILD_TYPE=Release ./scripts/build-native.sh
+```
+
+**Manual build with Ninja:**
 
 ```bash
 mkdir build && cd build
-cmake ..
+cmake -G "Ninja" ..
 cmake --build .
 ```
 
-### Linux
-
-```bash
-mkdir build && cd build
-cmake ..
-cmake --build .
-```
+**Note:** The project uses Ninja as the default build backend for faster builds. Make sure Ninja is installed:
+- macOS: `brew install ninja`
+- Linux (Ubuntu/Debian): `sudo apt-get install ninja-build`
 
 ### Windows (Native)
 
 ```bash
+# Using Visual Studio
 mkdir build && cd build
-cmake ..
+cmake -G "Visual Studio 17 2022" ..
+cmake --build . --config Release
+
+# Or using Ninja (if available)
+mkdir build && cd build
+cmake -G "Ninja" ..
 cmake --build .
 ```
 
@@ -45,10 +59,10 @@ cmake --build .
    ```bash
    # Download from: https://github.com/raspberrypi/tools
    # Or use a package manager
-   
+
    # macOS (using Homebrew)
    brew install arm-linux-gnueabihf-binutils
-   
+
    # Linux (Ubuntu/Debian)
    sudo apt-get install gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf
    ```
@@ -78,6 +92,7 @@ RASPBERRY_PI_VERSION=3 RPI_64BIT=OFF ./scripts/build-raspberry-pi.sh
 mkdir build-rpi && cd build-rpi
 
 cmake \
+    -G "Ninja" \
     -DCMAKE_TOOLCHAIN_FILE=../toolchains/raspberry-pi.cmake \
     -DRASPBERRY_PI_VERSION=4 \
     -DRPI_64BIT=ON \
@@ -87,6 +102,10 @@ cmake \
 
 cmake --build .
 ```
+
+**Note:** The build script uses Ninja by default. Make sure Ninja is installed:
+- macOS: `brew install ninja`
+- Linux (Ubuntu/Debian): `sudo apt-get install ninja-build`
 
 #### Raspberry Pi Versions
 
@@ -101,7 +120,7 @@ cmake --build .
    ```bash
    # macOS
    brew install mingw-w64
-   
+
    # Linux (Ubuntu/Debian)
    sudo apt-get install mingw-w64
    ```
@@ -118,12 +137,17 @@ cmake --build .
 mkdir build-windows && cd build-windows
 
 cmake \
+    -G "Ninja" \
     -DCMAKE_TOOLCHAIN_FILE=../toolchains/windows-cross.cmake \
     -DMINGW_PATH=/usr/x86_64-w64-mingw32 \
     ..
 
 cmake --build .
 ```
+
+**Note:** The build script uses Ninja by default. Make sure Ninja is installed:
+- macOS: `brew install ninja`
+- Linux (Ubuntu/Debian): `sudo apt-get install ninja-build`
 
 ### Building for Linux (from macOS)
 
@@ -135,6 +159,7 @@ For cross-compiling to Linux from macOS, you can use Docker or a Linux VM. Alter
 
 ```bash
 cmake \
+    -G "Ninja" \
     -DENABLE_HARDWARE_ACCELERATION=ON \
     -DUSE_SYSTEM_FFMPEG=ON \
     ..
@@ -144,6 +169,7 @@ cmake \
 
 ```bash
 cmake \
+    -G "Ninja" \
     -DENABLE_DXVA2=ON \
     -DSTATIC_RUNTIME=ON \
     ..
@@ -153,6 +179,7 @@ cmake \
 
 ```bash
 cmake \
+    -G "Ninja" \
     -DENABLE_VIDEOTOOLBOX=ON \
     -DENABLE_METAL=OFF \
     ..

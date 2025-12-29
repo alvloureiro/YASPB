@@ -28,6 +28,9 @@ StreamingPlayback is a library designed to provide a clean, extensible interface
 ### Prerequisites
 
 - CMake 3.16 or higher
+- Ninja build system (recommended for faster builds)
+  - macOS: `brew install ninja`
+  - Linux (Ubuntu/Debian): `sudo apt-get install ninja-build`
 - C++17 compatible compiler
 - **No external dependencies required for Mock backend** (default)
 - FFmpeg development libraries (only if using FFmpeg backend)
@@ -37,12 +40,24 @@ StreamingPlayback is a library designed to provide a clean, extensible interface
 
 #### macOS / Linux
 
+**Using the build script (recommended):**
+
+```bash
+# Build with default settings (Debug build)
+./scripts/build-native.sh
+
+# Build with custom settings
+CMAKE_BUILD_TYPE=Release ./scripts/build-native.sh
+```
+
+**Manual build with Ninja:**
+
 ```bash
 # Create build directory
 mkdir build && cd build
 
-# Configure
-cmake ..
+# Configure with Ninja generator
+cmake -G "Ninja" ..
 
 # Build
 cmake --build .
@@ -52,6 +67,10 @@ ctest
 # Or run directly:
 ./bin/playback_tests
 ```
+
+**Note:** The project uses Ninja as the default build backend for faster builds. Make sure Ninja is installed:
+- macOS: `brew install ninja`
+- Linux (Ubuntu/Debian): `sudo apt-get install ninja-build`
 
 #### Windows
 
@@ -107,7 +126,13 @@ The project supports cross-compilation for multiple platforms. See [Cross-Platfo
 
 Example with custom options:
 ```bash
-cmake -DBUILD_EXAMPLES=ON -DENABLE_GSTREAMER_BACKEND=ON ..
+# Using the build script
+CMAKE_BUILD_TYPE=Release ./scripts/build-native.sh
+cd build && cmake -G "Ninja" .. -DBUILD_EXAMPLES=ON -DENABLE_GSTREAMER_BACKEND=ON
+
+# Or manually
+mkdir build && cd build
+cmake -G "Ninja" -DBUILD_EXAMPLES=ON -DENABLE_GSTREAMER_BACKEND=ON ..
 ```
 
 ## Project Structure
@@ -215,23 +240,27 @@ For detailed information on how to configure builds for specific scenarios, see 
 
 **Build only FFmpeg backend:**
 ```bash
-cmake .. -DENABLE_FFMPEG_BACKEND=ON
+mkdir build && cd build
+cmake -G "Ninja" .. -DENABLE_FFMPEG_BACKEND=ON
 ```
 *(Mock backend is auto-disabled, tests/coverage are OFF by default)*
 
 **Build FFmpeg backend + tests:**
 ```bash
-cmake .. -DENABLE_FFMPEG_BACKEND=ON -DBUILD_TESTS=ON
+mkdir build && cd build
+cmake -G "Ninja" .. -DENABLE_FFMPEG_BACKEND=ON -DBUILD_TESTS=ON
 ```
 
 **Build FFmpeg backend + tests + coverage:**
 ```bash
-cmake .. -DENABLE_FFMPEG_BACKEND=ON -DBUILD_TESTS=ON -DENABLE_COVERAGE=ON
+mkdir build && cd build
+cmake -G "Ninja" .. -DENABLE_FFMPEG_BACKEND=ON -DBUILD_TESTS=ON -DENABLE_COVERAGE=ON
 ```
 
 **Build FFmpeg backend + example:**
 ```bash
-cmake .. -DENABLE_FFMPEG_BACKEND=ON -DBUILD_FFMPEG_AUDIO_EXAMPLE=ON
+mkdir build && cd build
+cmake -G "Ninja" .. -DENABLE_FFMPEG_BACKEND=ON -DBUILD_FFMPEG_AUDIO_EXAMPLE=ON
 ```
 *(BUILD_EXAMPLES is automatically enabled when you enable a specific example)*
 
@@ -265,9 +294,12 @@ export GTEST_ROOT=/path/to/gtest
 ### Running Tests
 
 ```bash
-# Build with tests enabled (default)
+# Build with tests enabled (default) using the build script
+./scripts/build-native.sh
+
+# Or manually with Ninja
 mkdir build && cd build
-cmake .. -DBUILD_TESTS=ON
+cmake -G "Ninja" .. -DBUILD_TESTS=ON
 cmake --build .
 
 # Run all tests
@@ -317,9 +349,14 @@ sudo apt-get install lcov gcov
 #### Generating Coverage Reports
 
 ```bash
-# Build with coverage enabled
+# Build with coverage enabled using the build script
+CMAKE_BUILD_TYPE=Debug ./scripts/build-native.sh
+# Then reconfigure with coverage:
+cd build && cmake -G "Ninja" .. -DENABLE_COVERAGE=ON -DCMAKE_BUILD_TYPE=Debug
+
+# Or manually with Ninja
 mkdir build && cd build
-cmake .. -DENABLE_COVERAGE=ON -DCMAKE_BUILD_TYPE=Debug
+cmake -G "Ninja" .. -DENABLE_COVERAGE=ON -DCMAKE_BUILD_TYPE=Debug
 cmake --build .
 
 # Run tests to generate coverage data
@@ -422,7 +459,7 @@ The pre-commit hook will:
 **Generate compile_commands.json:**
 ```bash
 cd build
-cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ..
+cmake -G "Ninja" -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ..
 # compile_commands.json will be created in the build directory
 # Create a symlink in the project root for clang-tidy:
 ln -s build/compile_commands.json ../compile_commands.json

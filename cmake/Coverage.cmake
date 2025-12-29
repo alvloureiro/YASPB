@@ -76,8 +76,8 @@ if(GENHTML_PATH)
     message(STATUS "  genhtml: ${GENHTML_PATH}")
 endif()
 
-# Coverage flags
-set(COVERAGE_FLAGS "-g -O0 --coverage -fprofile-arcs -ftest-coverage")
+# Coverage flags (as a list, not a single string)
+set(COVERAGE_FLAGS "-g" "-O0" "--coverage" "-fprofile-arcs" "-ftest-coverage")
 set(COVERAGE_LINK_FLAGS "--coverage")
 
 # Coverage output directories
@@ -103,11 +103,6 @@ function(enable_coverage_for_target target_name)
 
     # Add coverage flags to linking
     target_link_options(${target_name} PRIVATE ${COVERAGE_LINK_FLAGS})
-
-    # Set coverage output directory
-    set_target_properties(${target_name} PROPERTIES
-        COMPILE_OPTIONS "${COVERAGE_FLAGS}"
-    )
 
     message(STATUS "Coverage enabled for target: ${target_name}")
 endfunction()
